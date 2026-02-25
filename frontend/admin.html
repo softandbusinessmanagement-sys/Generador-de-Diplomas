@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo — DiplomasWeb</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Estilos adicionales solo para admin */
+        .admin-actions { display: flex; gap: 10px; }
+        .btn-refresh {
+            padding: 10px 20px;
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: var(--font-body);
+            cursor: pointer;
+            color: var(--gray-800);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .btn-refresh:hover { border-color: var(--navy); color: var(--navy); }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,31,61,0.5);
+            
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+
+        .modal-box {
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: 32px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(15,31,61,0.2);
+        }
+        .modal-title { font-family: var(--font-display); font-size: 20px; color: var(--navy); margin-bottom: 12px; }
+        .modal-body { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-bottom: 24px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-cancel { padding: 9px 20px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); background: white; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 500; }
+        .btn-confirm-delete { padding: 9px 20px; background: var(--red); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 600; }
+        .btn-confirm-delete:hover { background: #a93226; }
+
+        /* Validación QR section */
+        .validate-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .validate-section label { font-size: 13px; font-weight: 600; color: var(--navy); white-space: nowrap; }
+        .validate-input {
+            padding: 9px 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: var(--font-body);
+            outline: none;
+            transition: var(--transition);
+            width: 160px;
+        }
+        .validate-input:focus { border-color: var(--navy); }
+        .btn-validate {
+            padding: 9px 18px;
+            background: var(--navy);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-validate:hover { background: #162d5c; }
+        .validate-result {
+            font-size: 13px;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            flex-basis: 100%;
+        }
+        .validate-result.ok { background: var(--green-light); color: var(--green); }
+        .validate-result.fail { background: var(--red-light); color: var(--red); }
+
+        .table-footer {
+            padding: 14px 16px;
+            border-top: 1px solid var(--gray-100);
+            font-size: 12px;
+            color: var(--gray-400);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-bg"></div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="modalEliminar">
+        <div class="modal-box">
+            <h2 class="modal-title">⚠️ Eliminar Diploma</h2>
+            <p class="modal-body" id="modalBody">¿Estás seguro de que quieres eliminar este diploma? Esta acción no se puede deshacer.</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-confirm-delete" id="btnConfirmarEliminar">Sí, eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon">🎓</span>
+                <span class="logo-text">DiplomasWeb</span>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">Registro</a>
+                <a href="admin.html" class="nav-link active">Panel Admin</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+
+        <!-- Header -->
+        <div class="admin-header-section">
+            <div>
+                <h1 class="admin-title">Panel Administrativo</h1>
+                <p class="admin-subtitle">Gestión de diplomas y titulaciones registradas</p>
+            </div>
+            <div class="admin-actions">
+                <button class="btn-refresh" onclick="cargarDiplomas()">🔄 Actualizar</button>
+                <a href="index.html" class="btn-submit" style="width:auto; padding: 10px 20px; text-decoration:none; font-size:14px;">
+                    + Nuevo Registro
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card navy">
+                <div class="stat-number" id="statTotal">—</div>
+                <div class="stat-label">Total Diplomas</div>
+            </div>
+            <div class="stat-card gold">
+                <div class="stat-number" id="statTesis">—</div>
+                <div class="stat-label">Tesis</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-number" id="statTSP">—</div>
+                <div class="stat-label">TSP</div>
+            </div>
+        </div>
+
+        <!-- Validar Diploma por DNI -->
+        <div class="validate-section">
+            <label>🔍 Validar Diploma por DNI:</label>
+            <input type="text" class="validate-input" id="dniValidar" placeholder="12345678" maxlength="8">
+            <button class="btn-validate" onclick="validarDiploma()">Verificar</button>
+            <div class="validate-result" id="validateResult" style="display:none"></div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🔎</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre, apellidos, DNI o carrera...">
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-card">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Estudiante</th>
+                            <th>DNI</th>
+                            <th>Carrera</th>
+                            <th>Modalidad</th>
+                            <th>Asesor</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBody">
+                        <tr class="loading-row">
+                            <td colspan="8">⏳ Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-footer">
+                <span id="tableCount">Cargando...</span>
+                <span id="lastUpdate">—</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+        let diplomatPendienteEliminar = null;
+        let todosLosDiplomas = [];
+
+        // ─── Cargar estadísticas ───────────────────────────────────────────
+
+        async function cargarEstadisticas() {
+            try {
+                const res = await fetch(`${API_URL}/admin/estadisticas`);
+                if (!res.ok) return;
+                const data = await res.json();
+                document.getElementById("statTotal").textContent = data.total_diplomas;
+                document.getElementById("statTesis").textContent = data.por_modalidad?.Tesis ?? 0;
+                document.getElementById("statTSP").textContent   = data.por_modalidad?.TSP ?? 0;
+            } catch (e) {
+                console.error("Error cargando estadísticas:", e);
+            }
+        }
+
+        // ─── Cargar diplomas ───────────────────────────────────────────────
+
+        async function cargarDiplomas(busqueda = "") {
+            const tbody = document.getElementById("tablaBody");
+            tbody.innerHTML = `<tr class="loading-row"><td colspan="8">⏳ Cargando datos...</td></tr>`;
+
+            try {
+                const params = new URLSearchParams({ limit: 100 });
+                if (busqueda) params.append("buscar", busqueda);
+
+                const res = await fetch(`${API_URL}/admin/diplomas?${params}`);
+                if (!res.ok) throw new Error("Error al cargar diplomas");
+
+                todosLosDiplomas = await res.json();
+                renderizarTabla(todosLosDiplomas);
+                cargarEstadisticas();
+
+                const ahora = new Date().toLocaleTimeString("es-PE");
+                document.getElementById("lastUpdate").textContent = `Última actualización: ${ahora}`;
+
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = `
+                    <tr><td colspan="8">
+                        <div class="table-empty">
+                            <div class="empty-icon">⚠️</div>
+                            <p>No se pudo conectar al servidor.<br>Verifica que el backend esté corriendo.</p>
+                        </div>
+                    </td></tr>`;
+                document.getElementById("tableCount").textContent = "Error de conexión";
+            }
+        }
+
+        // ─── Renderizar tabla ──────────────────────────────────────────────
+
+        function renderizarTabla(diplomas) {
+            const tbody = document.getElementById("tablaBody");
+            document.getElementById("tableCount").textContent = `${diplomas.length} registro(s) encontrado(s)`;
+
+            if (diplomas.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="8">
+                        <div class="table-empty">
+                            <div class="empty-icon">📄</div>
+                            <p>No hay diplomas registrados aún.</p>
+                        </div>
+                    </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = diplomas.map((d, i) => `
+                <tr>
+                    <td style="color: var(--gray-400); font-size:12px">${d.id}</td>
+                    <td>
+                        <strong style="display:block">${d.nombre} ${d.apellidos}</strong>
+                    </td>
+                    <td style="font-family: monospace; font-size:13px">${d.dni}</td>
+                    <td>${d.carrera}</td>
+                    <td>
+                        <span class="badge ${d.modalidad === 'Tesis' ? 'badge-tesis' : 'badge-tsp'}">
+                            ${d.modalidad}
+                        </span>
+                    </td>
+                    <td>${d.asesor}</td>
+                    <td>${formatearFecha(d.fecha)}</td>
+                    <td>
+                        <div style="display:flex; gap:6px">
+                            <a href="${API_URL}/admin/descargar/${d.dni}"
+                               class="btn-sm btn-download" 
+                               target="_blank"
+                               title="Descargar diploma">
+                               📄 Descargar
+                            </a>
+                            <button class="btn-sm btn-delete" 
+                                    onclick="confirmarEliminar(${d.id}, '${d.nombre} ${d.apellidos}')"
+                                    title="Eliminar diploma">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        // ─── Formatear fecha ───────────────────────────────────────────────
+
+        function formatearFecha(fechaStr) {
+            if (!fechaStr) return "—";
+            const [y, m, d] = fechaStr.split("-");
+            const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+            return `${d} ${meses[parseInt(m)-1]} ${y}`;
+        }
+
+        // ─── Buscar ────────────────────────────────────────────────────────
+
+        let searchTimeout = null;
+        document.getElementById("searchInput").addEventListener("input", (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                cargarDiplomas(e.target.value.trim());
+            }, 400);
+        });
+
+        // ─── Confirmar y eliminar ──────────────────────────────────────────
+
+        function confirmarEliminar(id, nombre) {
+            diplomatPendienteEliminar = id;
+            document.getElementById("modalBody").textContent =
+                `¿Estás seguro de que quieres eliminar el diploma de "${nombre}"? Esta acción no se puede deshacer.`;
+            document.getElementById("modalEliminar").classList.add("active");
+        }
+
+        function cerrarModal() {
+            document.getElementById("modalEliminar").classList.remove("active");
+            diplomatPendienteEliminar = null;
+        }
+
+        document.getElementById("btnConfirmarEliminar").addEventListener("click", async () => {
+            if (!diplomatPendienteEliminar) return;
+
+            try {
+                const res = await fetch(`${API_URL}/admin/diplomas/${diplomatPendienteEliminar}`, {
+                    method: "DELETE"
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    cerrarModal();
+                    cargarDiplomas(document.getElementById("searchInput").value);
+                } else {
+                    alert("Error al eliminar: " + (data.detail || "Error desconocido"));
+                }
+            } catch (e) {
+                alert("Error de conexión al eliminar el diploma");
+            }
+        });
+
+        // Cerrar modal al hacer click fuera
+        document.getElementById("modalEliminar").addEventListener("click", (e) => {
+            if (e.target === e.currentTarget) cerrarModal();
+        });
+
+        // ─── Validar Diploma por DNI ───────────────────────────────────────
+
+        async function validarDiploma() {
+            const dni = document.getElementById("dniValidar").value.trim();
+            const resultEl = document.getElementById("validateResult");
+
+            if (!/^\d{8}$/.test(dni)) {
+                resultEl.textContent = "❌ Ingresa un DNI válido de 8 dígitos";
+                resultEl.className = "validate-result fail";
+                resultEl.style.display = "block";
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/validar/${dni}`);
+                const data = await res.json();
+
+                if (res.ok) {
+                    resultEl.innerHTML = `
+                        ✅ <strong>Diploma Auténtico</strong> — 
+                        ${data.nombre_completo} | ${data.carrera} | ${data.modalidad} | ${formatearFecha(data.fecha)}
+                    `;
+                    resultEl.className = "validate-result ok";
+                } else {
+                    resultEl.textContent = `❌ ${data.detail || "Diploma no encontrado"}`;
+                    resultEl.className = "validate-result fail";
+                }
+            } catch (e) {
+                resultEl.textContent = "❌ Error al conectar con el servidor";
+                resultEl.className = "validate-result fail";
+            }
+            resultEl.style.display = "block";
+        }
+
+        // Validar con Enter
+        document.getElementById("dniValidar").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") validarDiploma();
+        });
+
+        // ─── Init ──────────────────────────────────────────────────────────
+        cargarDiplomas();
+    </script>
+
+</body>
+</html>
