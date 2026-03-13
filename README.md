@@ -152,3 +152,4 @@ La plantilla `templates/diploma_template.docx` usa los siguientes marcadores:
 - [ ] Subir diplomas a Supabase Storage (nube)
 - [ ] Generación masiva desde Excel
 - [ ] Exportar listado de diplomas a Excel/PDF
+"# Diplomas-web"  
