@@ -9,9 +9,10 @@ load_dotenv()
 DB_USER     = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_HOST     = os.getenv("DB_HOST", "localhost")
-DB_PORT     = os.getenv("DB_PORT", "5432")
+DB_PORT     = os.getenv("DB_PORT", "6543") # Cambiado a 6543
 DB_NAME     = os.getenv("DB_NAME", "postgres")
 
+# Construcción de la URL
 SQLALCHEMY_DATABASE_URL = (
     f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
@@ -23,6 +24,7 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=3,
     max_overflow=5,
+    # El SSL es obligatorio para Supabase desde fuera
     connect_args={"sslmode": "require"} if es_remoto else {}
 )
 
