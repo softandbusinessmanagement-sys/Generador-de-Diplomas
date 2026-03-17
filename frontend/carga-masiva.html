@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carga Masiva — DiplomasWeb</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="page-bg"></div>
+
+<header class="site-header">
+    <div class="header-inner">
+        <div class="logo">🎓 <span class="logo-text">DiplomasWeb</span></div>
+        <nav class="header-nav">
+            <a href="index.html" class="nav-link">Registro</a>
+            <a href="admin.html" class="nav-link">Panel Admin</a>
+            <a href="carga-masiva.html" class="nav-link active">Carga Masiva</a>
+        </nav>
+    </div>
+</header>
+
+<div class="admin-layout">
+
+    <div class="admin-header-section">
+        <div>
+            <h1 class="admin-title">Carga Masiva</h1>
+            <p class="admin-subtitle">Genera múltiples diplomas desde un archivo Excel</p>
+        </div>
+        <a href="http://127.0.0.1:8000/admin/plantilla-excel"
+           class="btn-primary" download>
+            📥 Descargar Plantilla Excel
+        </a>
+    </div>
+
+    <!-- Pasos -->
+    <div class="table-card" style="padding:32px;margin-bottom:24px">
+
+        <!-- Paso 1 -->
+        <div class="paso-card">
+            <div class="paso-num">1</div>
+            <div class="paso-body">
+                <div class="paso-titulo">Descarga la plantilla Excel</div>
+                <div class="paso-desc">
+                    Usa el botón de arriba para descargar la plantilla con el formato correcto.
+                    No cambies los nombres de las columnas.
+                </div>
+                <div class="columnas-list">
+                    <span class="col-tag optional-tag">numero_resolucion</span>
+                    <span class="col-tag required-tag">nombre *</span>
+                    <span class="col-tag required-tag">apellidos *</span>
+                    <span class="col-tag required-tag">dni *</span>
+                    <span class="col-tag required-tag">carrera *</span>
+                    <span class="col-tag required-tag">modalidad *</span>
+                    <span class="col-tag required-tag">titulo_trabajo *</span>
+                    <span class="col-tag required-tag">asesor *</span>
+                    <span class="col-tag required-tag">fecha *</span>
+                </div>
+                <p style="font-size:12px;color:var(--gray-400)">
+                    * Campos obligatorios &nbsp;|&nbsp;
+                    Modalidad: <strong>Tesis</strong> o <strong>TSP</strong> &nbsp;|&nbsp;
+                    Fecha: <strong>YYYY-MM-DD</strong> o <strong>DD/MM/YYYY</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Paso 2 -->
+        <div class="paso-card">
+            <div class="paso-num">2</div>
+            <div class="paso-body">
+                <div class="paso-titulo">Sube tu archivo Excel</div>
+                <div class="paso-desc">
+                    Arrastra tu archivo o haz clic para seleccionarlo.
+                    Se procesarán todas las filas y se generarán los diplomas automáticamente.
+                </div>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📂</div>
+                    <div class="upload-text">
+                        Arrastra tu archivo aquí o
+                        <span class="upload-link" onclick="document.getElementById('fileInput').click()">
+                            haz clic para seleccionar
+                        </span>
+                    </div>
+                    <div class="upload-hint">Formatos aceptados: .xlsx, .xls</div>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls"
+                           style="display:none" onchange="archivoSeleccionado(this)">
+                </div>
+
+                <div class="archivo-seleccionado" id="archivoInfo" style="display:none">
+                    <span id="archivoNombre">archivo.xlsx</span>
+                    <button onclick="limpiarArchivo()"
+                            style="background:none;border:none;cursor:pointer;color:var(--green);font-size:16px">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paso 3 -->
+        <div class="paso-card">
+            <div class="paso-num">3</div>
+            <div class="paso-body">
+                <div class="paso-titulo">Procesa y descarga</div>
+                <div class="paso-desc">
+                    El sistema validará cada fila, generará los diplomas Word (y PDF si tienes LibreOffice),
+                    y te entregará un ZIP con todos los archivos.
+                </div>
+
+                <button class="btn-primary" id="btnProcesar"
+                        onclick="procesarExcel()" disabled>
+                    ⚡ Procesar y Generar Diplomas
+                </button>
+
+                <!-- Progreso -->
+                <div id="progressArea" style="display:none;margin-top:16px">
+                    <div style="display:flex;justify-content:space-between;font-size:13px;
+                                color:var(--gray-600);margin-bottom:8px">
+                        <span id="progressText">Procesando...</span>
+                        <span id="progressPct">0%</span>
+                    </div>
+                    <div style="background:var(--gray-100);border-radius:100px;height:8px;overflow:hidden">
+                        <div id="progressBar"
+                             style="height:100%;background:var(--navy);border-radius:100px;
+                                    width:0%;transition:width .4s ease"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Resultado -->
+    <div id="resultadoArea" style="display:none">
+        <div class="resultado-card" id="resultadoExito" style="display:none">
+            <h3 id="resultadoTitulo">✅ ¡Proceso completado!</h3>
+            <p id="resultadoMsg"></p>
+            <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                <a href="http://127.0.0.1:8000/admin/descargar-zip"
+                   class="btn-primary" download id="btnDescargarZip">
+                    📦 Descargar ZIP con todos los diplomas
+                </a>
+                <button class="btn-outline" onclick="reiniciar()">
+                    🔄 Procesar otro archivo
+                </button>
+            </div>
+        </div>
+
+        <div class="advertencias-card" id="resultadoAdvert" style="display:none">
+            <h4 id="advertTitulo">⚠️ Advertencias del proceso</h4>
+            <ul id="advertList"></ul>
+        </div>
+
+        <div class="resultado-card"
+             style="display:none;background:var(--red-light);border-color:rgba(192,57,43,.2)"
+             id="resultadoError">
+            <h3 style="color:var(--red)" id="errorTitulo">❌ Error en el proceso</h3>
+            <p style="color:var(--red)" id="errorMsg"></p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const API_URL = "http://127.0.0.1:8000";
+let archivoActual = null;
+
+// ── Drag & Drop ───────────────────────────────────────────────────────────────
+const zone = document.getElementById("uploadZone");
+zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("drag-over"); });
+zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+zone.addEventListener("drop", e => {
+    e.preventDefault();
+    zone.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith(".xlsx") || file.name.endsWith(".xls"))) {
+        setArchivo(file);
+    } else {
+        alert("Por favor sube un archivo .xlsx o .xls");
+    }
+});
+
+function archivoSeleccionado(input) {
+    if (input.files[0]) setArchivo(input.files[0]);
+}
+
+function setArchivo(file) {
+    archivoActual = file;
+    document.getElementById("archivoNombre").textContent = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    document.getElementById("archivoInfo").style.display = "flex";
+    document.getElementById("uploadZone").style.display  = "none";
+    document.getElementById("btnProcesar").disabled = false;
+    document.getElementById("resultadoArea").style.display = "none";
+}
+
+function limpiarArchivo() {
+    archivoActual = null;
+    document.getElementById("fileInput").value = "";
+    document.getElementById("archivoInfo").style.display = "none";
+    document.getElementById("uploadZone").style.display  = "block";
+    document.getElementById("btnProcesar").disabled = true;
+}
+
+// ── Procesar ──────────────────────────────────────────────────────────────────
+async function procesarExcel() {
+    if (!archivoActual) return;
+
+    const btn = document.getElementById("btnProcesar");
+    btn.disabled = true;
+    btn.textContent = "⏳ Procesando...";
+
+    document.getElementById("resultadoArea").style.display   = "none";
+    document.getElementById("resultadoExito").style.display  = "none";
+    document.getElementById("resultadoAdvert").style.display = "none";
+    document.getElementById("resultadoError").style.display  = "none";
+
+    // Animación de progreso
+    const progressArea = document.getElementById("progressArea");
+    const progressBar  = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const progressPct  = document.getElementById("progressPct");
+    progressArea.style.display = "block";
+
+    let pct = 0;
+    const intervalo = setInterval(() => {
+        if (pct < 85) {
+            pct += Math.random() * 8;
+            progressBar.style.width = Math.min(pct, 85) + "%";
+            progressPct.textContent  = Math.floor(Math.min(pct, 85)) + "%";
+            progressText.textContent = pct < 30 ? "Leyendo Excel..."
+                : pct < 60 ? "Validando datos..."
+                : "Generando diplomas...";
+        }
+    }, 400);
+
+    try {
+        const formData = new FormData();
+        formData.append("file", archivoActual);
+
+        const res = await fetch(`${API_URL}/admin/carga-masiva`, {
+            method: "POST",
+            body: formData
+        });
+
+        clearInterval(intervalo);
+        progressBar.style.width  = "100%";
+        progressPct.textContent  = "100%";
+        progressText.textContent = "¡Completado!";
+
+        const data = await res.json();
+        document.getElementById("resultadoArea").style.display = "block";
+
+        if (res.ok && data.exitosos > 0) {
+            document.getElementById("resultadoExito").style.display = "block";
+            document.getElementById("resultadoTitulo").textContent  =
+                `✅ ¡${data.exitosos} diploma(s) generado(s)!`;
+            document.getElementById("resultadoMsg").textContent =
+                `Se procesaron ${data.procesados} fila(s). ` +
+                `Exitosos: ${data.exitosos}. ` +
+                `Omitidos: ${data.omitidos || 0}. ` +
+                (data.tiene_pdf ? "Se generaron Word y PDF." : "Se generaron archivos Word.");
+        } else if (!res.ok) {
+            document.getElementById("resultadoError").style.display = "block";
+            document.getElementById("errorTitulo").textContent = "❌ Error en el proceso";
+            document.getElementById("errorMsg").textContent    = data.detail || "Error desconocido";
+        } else {
+            document.getElementById("resultadoError").style.display = "block";
+            document.getElementById("errorTitulo").textContent = "⚠️ Sin diplomas generados";
+            document.getElementById("errorMsg").textContent    =
+                "No se pudo generar ningún diploma. Revisa las advertencias.";
+        }
+
+        if (data.advertencias?.length > 0) {
+            document.getElementById("resultadoAdvert").style.display = "block";
+            document.getElementById("advertTitulo").textContent =
+                `⚠️ ${data.advertencias.length} advertencia(s)`;
+            document.getElementById("advertList").innerHTML =
+                data.advertencias.map(a => `<li>${a}</li>`).join("");
+        }
+
+    } catch(e) {
+        clearInterval(intervalo);
+        progressArea.style.display = "none";
+        document.getElementById("resultadoArea").style.display  = "block";
+        document.getElementById("resultadoError").style.display = "block";
+        document.getElementById("errorTitulo").textContent = "❌ Error de conexión";
+        document.getElementById("errorMsg").textContent    =
+            "No se pudo conectar al servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8000";
+    } finally {
+        btn.disabled    = false;
+        btn.textContent = "⚡ Procesar y Generar Diplomas";
+    }
+}
+
+function reiniciar() {
+    limpiarArchivo();
+    document.getElementById("progressArea").style.display  = "none";
+    document.getElementById("resultadoArea").style.display = "none";
+    document.getElementById("progressBar").style.width     = "0%";
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación de Diploma — DiplomasWeb</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="page-bg"></div>
+
+<header class="site-header">
+    <div class="header-inner">
+        <div class="logo">🎓 <span class="logo-text">DiplomasWeb</span></div>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="form-card" style="max-width:560px">
+
+        <div class="form-header">
+            <p class="form-eyebrow">Verificación Oficial</p>
+            <h1 class="form-title">Autenticidad<br>del Diploma</h1>
+            <p class="form-subtitle">Sistema de verificación de diplomas universitarios mediante código QR.</p>
+        </div>
+
+        <div style="padding:36px 44px">
+
+            <!-- Cargando -->
+            <div id="estadoCargando" style="text-align:center;padding:40px 0">
+                <div style="font-size:40px;margin-bottom:16px">⏳</div>
+                <p style="color:var(--gray-600);font-size:15px">Verificando diploma...</p>
+            </div>
+
+            <!-- Resultado exitoso -->
+            <div id="estadoExito" style="display:none">
+                <div style="text-align:center;margin-bottom:28px">
+                    <div style="font-size:56px;margin-bottom:12px">✅</div>
+                    <h2 style="font-family:var(--font-display);font-size:22px;
+                               color:var(--green);margin-bottom:6px">
+                        Diploma Auténtico
+                    </h2>
+                    <p style="font-size:13px;color:var(--gray-600)">
+                        Este diploma ha sido verificado y es auténtico.
+                    </p>
+                </div>
+
+                <div style="background:var(--green-light);border:1px solid rgba(26,122,74,.2);
+                            border-radius:var(--radius-md);padding:24px">
+                    <div class="expediente-grid">
+                        <div class="exp-field exp-full">
+                            <span class="exp-label">Nombre Completo</span>
+                            <span class="exp-value" id="verNombre" style="font-size:18px;font-weight:700;color:var(--navy)"></span>
+                        </div>
+                        <div class="exp-field">
+                            <span class="exp-label">DNI</span>
+                            <span class="exp-value" id="verDni" style="font-family:monospace"></span>
+                        </div>
+                        <div class="exp-field">
+                            <span class="exp-label">Modalidad</span>
+                            <span class="exp-value" id="verModalidad"></span>
+                        </div>
+                        <div class="exp-field exp-full">
+                            <span class="exp-label">Carrera Profesional</span>
+                            <span class="exp-value" id="verCarrera"></span>
+                        </div>
+                        <div class="exp-field exp-full">
+                            <span class="exp-label">Título del Trabajo</span>
+                            <span class="exp-value" id="verTitulo" style="font-size:13px;line-height:1.5"></span>
+                        </div>
+                        <div class="exp-field">
+                            <span class="exp-label">Asesor</span>
+                            <span class="exp-value" id="verAsesor"></span>
+                        </div>
+                        <div class="exp-field">
+                            <span class="exp-label">Fecha de Titulación</span>
+                            <span class="exp-value" id="verFecha"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;text-align:center;padding:12px;
+                            background:var(--gray-100);border-radius:var(--radius-sm)">
+                    <p style="font-size:11px;color:var(--gray-400);letter-spacing:.05em">
+                        🔒 Verificado por el Sistema DiplomasWeb
+                        — <span id="verFechaConsulta"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div id="estadoError" style="display:none;text-align:center;padding:40px 0">
+                <div style="font-size:56px;margin-bottom:16px">❌</div>
+                <h2 style="font-family:var(--font-display);font-size:20px;
+                           color:var(--red);margin-bottom:10px">
+                    Diploma No Encontrado
+                </h2>
+                <p id="errorMsg" style="font-size:14px;color:var(--gray-600);line-height:1.6"></p>
+            </div>
+
+            <!-- Buscar manualmente -->
+            <div style="margin-top:28px;padding-top:24px;border-top:1px solid var(--gray-200)">
+                <p style="font-size:13px;color:var(--gray-600);margin-bottom:12px;text-align:center">
+                    ¿Verificar otro diploma?
+                </p>
+                <div style="display:flex;gap:10px">
+                    <input type="text" id="dniManual" placeholder="Ingresa el DNI (8 dígitos)"
+                           maxlength="8"
+                           style="flex:1;padding:10px 14px;border:1.5px solid var(--gray-200);
+                                  border-radius:var(--radius-sm);font-size:14px;
+                                  font-family:var(--font-body);outline:none">
+                    <button onclick="verificarManual()"
+                            style="padding:10px 20px;background:var(--navy);color:white;
+                                   border:none;border-radius:var(--radius-sm);
+                                   font-family:var(--font-body);font-size:14px;
+                                   font-weight:600;cursor:pointer">
+                        Verificar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script>
+const API_URL = "http://127.0.0.1:8000";
+
+const MESES = ["enero","febrero","marzo","abril","mayo","junio",
+               "julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+function formatFechaLarga(f) {
+    if (!f) return "—";
+    const [y, m, d] = f.split("-");
+    return `${parseInt(d)} de ${MESES[parseInt(m)-1]} de ${y}`;
+}
+
+async function verificarDni(dni) {
+    document.getElementById("estadoCargando").style.display = "block";
+    document.getElementById("estadoExito").style.display   = "none";
+    document.getElementById("estadoError").style.display   = "none";
+
+    try {
+        const res  = await fetch(`${API_URL}/validar/${dni}`);
+        const data = await res.json();
+
+        document.getElementById("estadoCargando").style.display = "none";
+
+        if (res.ok && data.valido) {
+            document.getElementById("verNombre").textContent    = data.nombre_completo;
+            document.getElementById("verDni").textContent       = data.dni;
+            document.getElementById("verModalidad").textContent = data.modalidad;
+            document.getElementById("verCarrera").textContent   = data.carrera;
+            document.getElementById("verTitulo").textContent    = data.titulo_trabajo;
+            document.getElementById("verAsesor").textContent    = data.asesor;
+            document.getElementById("verFecha").textContent     = formatFechaLarga(data.fecha);
+            document.getElementById("verFechaConsulta").textContent =
+                new Date().toLocaleString("es-PE");
+            document.getElementById("estadoExito").style.display = "block";
+        } else {
+            document.getElementById("errorMsg").textContent =
+                data.detail || "No se encontró ningún diploma para este DNI.";
+            document.getElementById("estadoError").style.display = "block";
+        }
+    } catch(e) {
+        document.getElementById("estadoCargando").style.display = "none";
+        document.getElementById("errorMsg").textContent =
+            "No se pudo conectar al servidor de verificación.";
+        document.getElementById("estadoError").style.display = "block";
+    }
+}
+
+function verificarManual() {
+    const dni = document.getElementById("dniManual").value.trim();
+    if (!/^\d{8}$/.test(dni)) {
+        alert("El DNI debe tener exactamente 8 dígitos");
+        return;
+    }
+    // Actualizar URL sin recargar
+    const url = new URL(window.location);
+    url.searchParams.set("dni", dni);
+    window.history.pushState({}, "", url);
+    verificarDni(dni);
+}
+
+document.getElementById("dniManual").addEventListener("keydown", e => {
+    if (e.key === "Enter") verificarManual();
+});
+
+// Al cargar la página leer DNI de la URL
+const params = new URLSearchParams(window.location.search);
+const dni    = params.get("dni");
+
+if (dni && /^\d{8}$/.test(dni)) {
+    verificarDni(dni);
+} else {
+    document.getElementById("estadoCargando").style.display = "none";
+    document.getElementById("estadoError").style.display   = "block";
+    document.getElementById("errorMsg").textContent =
+        "No se proporcionó un DNI válido. Escanea el código QR del diploma o ingresa el DNI manualmente.";
+}
+</script>
+</body>
+</html>

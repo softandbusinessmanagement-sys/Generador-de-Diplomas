@@ -1,22 +1,15 @@
 const API_URL = "http://127.0.0.1:8000";
 
-// ─── Validaciones del lado cliente ────────────────────────────────────────────
-
 const validaciones = {
-    nombre:        (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,100}$/.test(v.trim()) || "Solo letras, mínimo 2 caracteres",
-    apellidos:     (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,100}$/.test(v.trim()) || "Solo letras, mínimo 2 caracteres",
-    dni:           (v) => /^\d{8}$/.test(v)                                   || "El DNI debe tener exactamente 8 dígitos",
-    carrera:       (v) => v.trim().length >= 3                                 || "La carrera debe tener al menos 3 caracteres",
-    modalidad:     (v) => ["Tesis", "TSP"].includes(v)                         || "Selecciona una modalidad válida",
-    titulo_trabajo:(v) => v.trim().length >= 10                                || "El título debe tener al menos 10 caracteres",
-    asesor:        (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.]{5,100}$/.test(v.trim()) || "Solo letras, mínimo 5 caracteres",
-    fecha:         (v) => v !== ""                                             || "Selecciona una fecha"
+    nombre:        (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']{2,100}$/.test(v.trim()) || "Solo letras, mínimo 2 caracteres",
+    apellidos:     (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']{2,100}$/.test(v.trim()) || "Solo letras, mínimo 2 caracteres",
+    dni:           (v) => /^\d{8}$/.test(v) || "El DNI debe tener exactamente 8 dígitos",
+    carrera:       (v) => v.trim().length >= 3 || "Mínimo 3 caracteres",
+    modalidad:     (v) => ["Tesis","TSP"].includes(v) || "Selecciona una modalidad válida",
+    titulo_trabajo:(v) => v.trim().length >= 10 || "El título debe tener al menos 10 caracteres",
+    asesor:        (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\.,]{3,150}$/.test(v.trim()) || "Solo letras, espacios y puntos (Dr., Ma., Ing.)",
+    fecha:         (v) => v !== "" || "Selecciona una fecha"
 };
-
-function validarCampo(nombre, valor) {
-    const resultado = validaciones[nombre](valor);
-    return resultado === true ? null : resultado;
-}
 
 function mostrarError(campo, mensaje) {
     const input = document.getElementById(campo);
@@ -35,37 +28,28 @@ function limpiarError(campo) {
 function validarFormulario(data) {
     let valido = true;
     Object.keys(validaciones).forEach((campo) => {
-        const error = validarCampo(campo, data[campo] || "");
-        if (error) {
-            mostrarError(campo, error);
-            valido = false;
-        } else {
-            limpiarError(campo);
-        }
+        const error = validaciones[campo](data[campo] || "");
+        if (error !== true) { mostrarError(campo, error); valido = false; }
+        else limpiarError(campo);
     });
     return valido;
 }
 
-// ─── Validación en tiempo real ────────────────────────────────────────────────
-
+// Validación en tiempo real
 document.querySelectorAll("input, select").forEach((el) => {
     el.addEventListener("blur", () => {
         if (el.name && validaciones[el.name]) {
-            const error = validarCampo(el.name, el.value);
-            if (error) mostrarError(el.name, error);
+            const error = validaciones[el.name](el.value);
+            if (error !== true) mostrarError(el.name, error);
             else limpiarError(el.name);
         }
     });
-
     el.addEventListener("input", () => {
-        if (el.classList.contains("invalid")) {
-            const error = validarCampo(el.name, el.value);
-            if (!error) limpiarError(el.name);
+        if (el.classList.contains("invalid") && el.name && validaciones[el.name]) {
+            if (validaciones[el.name](el.value) === true) limpiarError(el.name);
         }
     });
 });
-
-// ─── Mostrar alertas ──────────────────────────────────────────────────────────
 
 function mostrarAlerta(tipo, html) {
     const box = document.getElementById("alertBox");
@@ -75,36 +59,21 @@ function mostrarAlerta(tipo, html) {
     box.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-function ocultarAlerta() {
-    const box = document.getElementById("alertBox");
-    box.style.display = "none";
-}
-
-// ─── Submit del formulario ────────────────────────────────────────────────────
-
 document.getElementById("formTitulacion").addEventListener("submit", async (e) => {
     e.preventDefault();
-    ocultarAlerta();
+    const data = Object.fromEntries(new FormData(e.target).entries());
 
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
-
-    // Validar antes de enviar
     if (!validarFormulario(data)) {
-        mostrarAlerta("error", "⚠️ Por favor corrige los errores señalados en el formulario.");
+        mostrarAlerta("error", "⚠️ Corrige los errores marcados en el formulario.");
         return;
     }
 
     const btn = document.getElementById("btnSubmit");
-    const btnText = btn.querySelector(".btn-text");
-    const btnIcon = btn.querySelector(".btn-icon");
-    const btnSpinner = btn.querySelector(".btn-spinner");
-
-    // Estado de carga
     btn.disabled = true;
-    btnText.textContent = "Generando diploma...";
-    btnIcon.style.display = "none";
-    btnSpinner.style.display = "inline";
+    btn.querySelector(".btn-text").textContent = "Generando...";
+    btn.querySelector(".btn-icon").style.display = "none";
+    btn.querySelector(".btn-spinner").style.display = "inline";
+    document.getElementById("alertBox").style.display = "none";
 
     try {
         const response = await fetch(`${API_URL}/generar-diploma`, {
@@ -116,42 +85,43 @@ document.getElementById("formTitulacion").addEventListener("submit", async (e) =
         const result = await response.json();
 
         if (response.ok) {
+            let botones = `<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+                <a href="${API_URL}/admin/descargar/${result.dni}/docx"
+                   class="download-link" download>
+                   📄 Descargar Word (.docx)
+                </a>`;
+
+            if (result.tiene_pdf) {
+                botones += `<a href="${API_URL}/admin/descargar/${result.dni}/pdf"
+                   class="download-link download-link-pdf" download>
+                   📕 Descargar PDF
+                </a>`;
+            } else {
+                botones += `<span class="pdf-nota">ℹ️ PDF no disponible — instala LibreOffice para activarlo</span>`;
+            }
+            botones += `</div>`;
+
             mostrarAlerta("success", `
                 ✅ <strong>${result.mensaje}</strong><br>
-                El diploma ha sido generado con éxito.<br>
-                <a href="${API_URL}/admin/descargar/${result.dni}" 
-                   class="download-link" 
-                   target="_blank">
-                    📄 Descargar Diploma (.docx)
-                </a>
+                ${result.tiene_pdf ? "Se generaron Word y PDF." : "Se generó el archivo Word."}<br>
+                ${botones}
             `);
             e.target.reset();
             Object.keys(validaciones).forEach(limpiarError);
 
         } else {
-            // Error del servidor (409 = duplicado, 422 = validación, 500 = interno)
-            let mensajeError = result.detail || "Error al generar el diploma";
-            if (response.status === 409) {
-                mensajeError = `⚠️ ${mensajeError}`;
-            } else if (response.status === 422) {
-                // Errores de validación de Pydantic
-                const errores = Array.isArray(result.detail)
-                    ? result.detail.map(e => e.msg).join(", ")
-                    : mensajeError;
-                mensajeError = `❌ Error de validación: ${errores}`;
-            } else {
-                mensajeError = `❌ ${mensajeError}`;
-            }
-            mostrarAlerta("error", mensajeError);
+            const msg = response.status === 409
+                ? `⚠️ ${result.detail}`
+                : `❌ ${result.detail || "Error al generar el diploma"}`;
+            mostrarAlerta("error", msg);
         }
 
     } catch (error) {
-        console.error("Error de red:", error);
         mostrarAlerta("error", "❌ No se pudo conectar con el servidor. Verifica que el backend esté corriendo en <strong>http://127.0.0.1:8000</strong>");
     } finally {
         btn.disabled = false;
-        btnText.textContent = "Generar Diploma";
-        btnIcon.style.display = "inline";
-        btnSpinner.style.display = "none";
+        btn.querySelector(".btn-text").textContent = "Generar Diploma";
+        btn.querySelector(".btn-icon").style.display = "inline";
+        btn.querySelector(".btn-spinner").style.display = "none";
     }
 });

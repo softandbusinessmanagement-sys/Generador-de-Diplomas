@@ -1,0 +1,24 @@
+# Variables de entorno — NUNCA subir
+.env
+
+# Archivos generados
+diplomas_generados/
+*.docx
+*.pdf
+*.zip
+*.xlsx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+desktop.ini

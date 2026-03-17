@@ -1,55 +1,67 @@
 from pydantic import BaseModel, Field, validator
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 import re
 
 
+
 class TitulacionCreate(BaseModel):
-    nombre: str = Field(..., min_length=2, max_length=100, description="Nombre del estudiante")
-    apellidos: str = Field(..., min_length=2, max_length=100, description="Apellidos del estudiante")
-    dni: str = Field(..., description="DNI del estudiante (8 dígitos)")
-    carrera: str = Field(..., min_length=3, max_length=100, description="Carrera universitaria")
-    modalidad: str = Field(..., description="Modalidad de titulación")
-    titulo_trabajo: str = Field(..., min_length=10, max_length=500, description="Título del trabajo")
-    asesor: str = Field(..., min_length=5, max_length=100, description="Nombre del asesor")
-    fecha: date = Field(..., description="Fecha de titulación")
+    numero_resolucion: Optional[str] = Field(None, max_length=100)
+    nombre: str = Field(..., min_length=2, max_length=100)
+    apellidos: str = Field(..., min_length=2, max_length=100)
+    dni: str = Field(..., description="8 dígitos")
+    carrera: str = Field(..., min_length=3, max_length=100)
+    modalidad: str = Field(...)
+    titulo_trabajo: str = Field(..., min_length=10, max_length=500)
+    asesor: str = Field(..., min_length=3, max_length=150)
+    fecha: date = Field(...)
 
     @validator("dni")
     def validar_dni(cls, v):
         if not re.match(r"^\d{8}$", v):
-            raise ValueError("El DNI debe tener exactamente 8 dígitos numéricos")
+            raise ValueError("El DNI debe tener exactamente 8 dígitos")
         return v
 
     @validator("modalidad")
     def validar_modalidad(cls, v):
-        opciones_validas = ["Tesis", "TSP"]
-        if v not in opciones_validas:
-            raise ValueError(f"La modalidad debe ser una de: {', '.join(opciones_validas)}")
+        if v not in ["Tesis", "TSP"]:
+            raise ValueError("Modalidad debe ser Tesis o TSP")
         return v
 
-    @validator("nombre", "apellidos", "asesor")
-    def validar_solo_letras(cls, v):
-        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$", v):
-            raise ValueError("Solo se permiten letras y espacios")
+    @validator("nombre", "apellidos")
+    def validar_letras(cls, v):
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']+$", v):
+            raise ValueError("Solo letras y espacios")
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "nombre": "Juan Carlos",
-                "apellidos": "García López",
-                "dni": "12345678",
-                "carrera": "Ingeniería de Sistemas",
-                "modalidad": "Tesis",
-                "titulo_trabajo": "Sistema de Gestión de Titulación con IA",
-                "asesor": "Dr. María Pérez Torres",
-                "fecha": "2025-06-15"
-            }
-        }
+    @validator("asesor")
+    def validar_asesor(cls, v):
+        # Permite Dr., Ma., Ing., Lic. y otros títulos con punto
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\.,]+$", v):
+            raise ValueError("Solo letras, espacios y puntos")
+        return v.strip()
+
+
+class TitulacionUpdate(BaseModel):
+    numero_resolucion: Optional[str] = Field(None, max_length=100)
+    nombre: Optional[str] = Field(None, min_length=2, max_length=100)
+    apellidos: Optional[str] = Field(None, min_length=2, max_length=100)
+    carrera: Optional[str] = Field(None, min_length=3, max_length=100)
+    modalidad: Optional[str] = None
+    titulo_trabajo: Optional[str] = Field(None, min_length=10, max_length=500)
+    asesor: Optional[str] = Field(None, min_length=3, max_length=150)
+    fecha: Optional[date] = None
+
+    @validator("asesor")
+    def validar_asesor(cls, v):
+        if v and not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\.,]+$", v):
+            raise ValueError("Solo letras, espacios y puntos")
+        return v.strip() if v else v
 
 
 class TitulacionResponse(BaseModel):
     id: int
+    numero_resolucion: Optional[str] = None
     nombre: str
     apellidos: str
     dni: str
@@ -59,12 +71,10 @@ class TitulacionResponse(BaseModel):
     asesor: str
     fecha: date
     ruta_documento: Optional[str] = None
-    created_at: Optional[str] = None
+    ruta_pdf: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
-
-
-class LoginRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=6)
+        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
