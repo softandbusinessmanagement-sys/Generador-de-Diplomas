@@ -1,0 +1,12 @@
+echo [build] > railway.toml
+echo builder = "NIXPACKS" >> railway.toml
+echo. >> railway.toml
+echo [deploy] >> railway.toml
+echo startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT" >> railway.toml
+echo healthcheckPath = "/health" >> railway.toml
+echo healthcheckTimeout = 300 >> railway.toml
+echo restartPolicyType = "ON_FAILURE" >> railway.toml
+echo restartPolicyMaxRetries = 10 >> railway.toml
+echo. >> railway.toml
+echo [build.env] >> railway.toml
+echo PYTHON_PATH = "/app" >> railway.toml
