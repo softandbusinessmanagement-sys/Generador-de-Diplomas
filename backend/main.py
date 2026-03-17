@@ -345,3 +345,27 @@ async def descargar_zip():
         raise HTTPException(status_code=404, detail="No hay ZIP disponible")
     return FileResponse(path=ZIP_TEMPORAL, filename="diplomas_generados.zip",
                         media_type="application/zip")
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Montar archivos estáticos
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# Servir index.html como raíz
+@app.get("/")
+async def read_index():
+    return FileResponse('frontend/index.html')
+
+# Servir admin.html
+@app.get("/admin")
+async def read_admin():
+    return FileResponse('frontend/admin.html')
+
+# Servir verificar.html
+@app.get("/verificar")
+async def read_verificar():
+    return FileResponse('frontend/verificar.html')

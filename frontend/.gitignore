@@ -1,17 +1,14 @@
-# Variables de entorno — NUNCA subir
+# Variables de entorno
 .env
 
 # Archivos generados
 diplomas_generados/
-*.docx
-*.pdf
-*.zip
-*.xlsx
 
-# Python
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 venv/
 .venv/
 *.egg-info/
