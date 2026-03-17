@@ -369,3 +369,6 @@ async def read_admin():
 @app.get("/verificar")
 async def read_verificar():
     return FileResponse('frontend/verificar.html')
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
