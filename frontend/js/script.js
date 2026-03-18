@@ -1,14 +1,15 @@
-const API_URL = "http://127.0.0.1:8000";
+// CONFIGURACIÓN GLOBAL - Apuntando a tu backend oficial en Railway
+const API_URL = "https://diplomasweb-production.up.railway.app";
 
 const validaciones = {
-    nombre:        (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']{2,100}$/.test(v.trim()) || "Solo letras, mínimo 2 caracteres",
-    apellidos:     (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']{2,100}$/.test(v.trim()) || "Solo letras, mínimo 2 caracteres",
-    dni:           (v) => /^\d{8}$/.test(v) || "El DNI debe tener exactamente 8 dígitos",
-    carrera:       (v) => v.trim().length >= 3 || "Mínimo 3 caracteres",
-    modalidad:     (v) => ["Tesis","TSP"].includes(v) || "Selecciona una modalidad válida",
-    titulo_trabajo:(v) => v.trim().length >= 10 || "El título debe tener al menos 10 caracteres",
-    asesor:        (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\.,]{3,150}$/.test(v.trim()) || "Solo letras, espacios y puntos (Dr., Ma., Ing.)",
-    fecha:         (v) => v !== "" || "Selecciona una fecha"
+    nombre:         (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']{2,100}$/.test(v.trim()) || "Solo letras, mínimo 2 caracteres",
+    apellidos:      (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']{2,100}$/.test(v.trim()) || "Solo letras, mínimo 2 caracteres",
+    dni:            (v) => /^\d{8}$/.test(v) || "El DNI debe tener exactamente 8 dígitos",
+    carrera:        (v) => v.trim().length >= 3 || "Mínimo 3 caracteres",
+    modalidad:      (v) => ["Tesis","TSP"].includes(v) || "Selecciona una modalidad válida",
+    titulo_trabajo: (v) => v.trim().length >= 10 || "El título debe tener al menos 10 caracteres",
+    asesor:         (v) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\.,]{3,150}$/.test(v.trim()) || "Solo letras, espacios y puntos (Dr., Ma., Ing.)",
+    fecha:          (v) => v !== "" || "Selecciona una fecha"
 };
 
 function mostrarError(campo, mensaje) {
@@ -97,7 +98,7 @@ document.getElementById("formTitulacion").addEventListener("submit", async (e) =
                    📕 Descargar PDF
                 </a>`;
             } else {
-                botones += `<span class="pdf-nota">ℹ️ PDF no disponible — instala LibreOffice para activarlo</span>`;
+                botones += `<span class="pdf-nota">ℹ️ PDF no disponible — instala LibreOffice en el servidor para activarlo</span>`;
             }
             botones += `</div>`;
 
@@ -117,7 +118,7 @@ document.getElementById("formTitulacion").addEventListener("submit", async (e) =
         }
 
     } catch (error) {
-        mostrarAlerta("error", "❌ No se pudo conectar con el servidor. Verifica que el backend esté corriendo en <strong>http://127.0.0.1:8000</strong>");
+        mostrarAlerta("error", `❌ No se pudo conectar con el servidor en Railway. Verifica que el servicio esté activo en: <strong>${API_URL}</strong>`);
     } finally {
         btn.disabled = false;
         btn.querySelector(".btn-text").textContent = "Generar Diploma";

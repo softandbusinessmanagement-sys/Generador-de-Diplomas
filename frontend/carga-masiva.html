@@ -30,7 +30,7 @@
             <h1 class="admin-title">Carga Masiva</h1>
             <p class="admin-subtitle">Genera múltiples diplomas desde un archivo Excel</p>
         </div>
-        <a href="http://127.0.0.1:8000/admin/plantilla-excel"
+        <a href="https://diplomasweb-production.up.railway.app/admin/plantilla-excel"
            class="btn-primary" download>
             📥 Descargar Plantilla Excel
         </a>
@@ -137,7 +137,7 @@
             <h3 id="resultadoTitulo">✅ ¡Proceso completado!</h3>
             <p id="resultadoMsg"></p>
             <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-                <a href="http://127.0.0.1:8000/admin/descargar-zip"
+                <a href="https://diplomasweb-production.up.railway.app/admin/descargar-zip"
                    class="btn-primary" download id="btnDescargarZip">
                     📦 Descargar ZIP con todos los diplomas
                 </a>
@@ -163,7 +163,7 @@
 </div>
 
 <script>
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://diplomasweb-production.up.railway.app";
 let archivoActual = null;
 
 // ── Drag & Drop ───────────────────────────────────────────────────────────────
@@ -286,7 +286,7 @@ async function procesarExcel() {
         document.getElementById("resultadoError").style.display = "block";
         document.getElementById("errorTitulo").textContent = "❌ Error de conexión";
         document.getElementById("errorMsg").textContent    =
-            "No se pudo conectar al servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8000";
+            "No se pudo conectar al servidor. Verifica que el servicio esté activo en Railway.";
     } finally {
         btn.disabled    = false;
         btn.textContent = "⚡ Procesar y Generar Diplomas";

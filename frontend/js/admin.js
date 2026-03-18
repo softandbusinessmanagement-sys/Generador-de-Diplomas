@@ -1,3 +1,6 @@
+// CONFIGURACIÓN GLOBAL - Apuntando a tu nuevo backend en Railway
+const API_URL = "https://diplomasweb-production.up.railway.app";
+
 let timerBusqueda;
 let idEliminando = null;
 
@@ -9,7 +12,8 @@ function formatearFecha(fechaStr) {
 
 async function cargarEstadisticas() {
     try {
-        const response = await fetch('http://127.0.0.1:8000/admin/estadisticas');
+        // Cambiado: URL local por API_URL
+        const response = await fetch(`${API_URL}/admin/estadisticas`);
         if (response.ok) {
             const data = await response.json();
             document.getElementById('stat-total').textContent = data.total;
@@ -23,9 +27,10 @@ async function cargarEstadisticas() {
 
 async function cargarDiplomas(busqueda = '') {
     try {
+        // Cambiado: URL local por API_URL
         const url = busqueda 
-            ? `http://127.0.0.1:8000/admin/diplomas?buscar=${encodeURIComponent(busqueda)}`
-            : 'http://127.0.0.1:8000/admin/diplomas';
+            ? `${API_URL}/admin/diplomas?buscar=${encodeURIComponent(busqueda)}`
+            : `${API_URL}/admin/diplomas`;
         
         const response = await fetch(url);
         if (response.ok) {
@@ -55,7 +60,7 @@ function renderizarTabla(diplomas) {
             <td>${diploma.asesor}</td>
             <td>${formatearFecha(diploma.fecha)}</td>
             <td style="display: flex; gap: 0.5rem;">
-                <a href="http://127.0.0.1:8000/admin/descargar/${diploma.dni}" class="btn-sm download" download style="text-decoration: none; display: inline-block;">↓ Descargar</a>
+                <a href="${API_URL}/admin/descargar/${diploma.dni}" class="btn-sm download" download style="text-decoration: none; display: inline-block;">↓ Descargar</a>
                 <button class="btn-sm delete" onclick="confirmarEliminar(${diploma.id}, '${diploma.nombre} ${diploma.apellidos}')">🗑 Eliminar</button>
             </td>
         </tr>
@@ -70,7 +75,8 @@ function confirmarEliminar(id, nombre) {
 
 async function eliminarDiploma(id) {
     try {
-        const response = await fetch(`http://127.0.0.1:8000/admin/diplomas/${id}`, {
+        // Cambiado: URL local por API_URL
+        const response = await fetch(`${API_URL}/admin/diplomas/${id}`, {
             method: 'DELETE'
         });
         
@@ -97,7 +103,8 @@ async function validarDiploma() {
     }
     
     try {
-        const response = await fetch(`http://127.0.0.1:8000/validar/${dni}`);
+        // Cambiado: URL local por API_URL
+        const response = await fetch(`${API_URL}/validar/${dni}`);
         
         if (response.ok) {
             const diploma = await response.json();

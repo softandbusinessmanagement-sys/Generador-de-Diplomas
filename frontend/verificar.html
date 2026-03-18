@@ -126,7 +126,7 @@
 </main>
 
 <script>
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://diplomasweb-production.up.railway.app";
 
 const MESES = ["enero","febrero","marzo","abril","mayo","junio",
                "julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -167,7 +167,7 @@ async function verificarDni(dni) {
     } catch(e) {
         document.getElementById("estadoCargando").style.display = "none";
         document.getElementById("errorMsg").textContent =
-            "No se pudo conectar al servidor de verificación.";
+            "No se pudo conectar al servidor de verificación en Railway.";
         document.getElementById("estadoError").style.display = "block";
     }
 }
