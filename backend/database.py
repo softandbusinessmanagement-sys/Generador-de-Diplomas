@@ -1,4 +1,5 @@
 import os
+import urllib.parse #
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -8,13 +9,16 @@ load_dotenv()
 
 DB_USER     = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+# ESCAPAR la contraseña para que el '#' no rompa la URL
+password_escapada = urllib.parse.quote_plus(DB_PASSWORD)
 DB_HOST     = os.getenv("DB_HOST", "localhost")
 DB_PORT     = os.getenv("DB_PORT", "6543") # Cambiado a 6543
 DB_NAME     = os.getenv("DB_NAME", "postgres")
 
-# Construcción de la URL
+
+# Usar la contraseña escapada aquí
 SQLALCHEMY_DATABASE_URL = (
-    f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    f"postgresql://{DB_USER}:{password_escapada}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
 es_remoto = "supabase.com" in DB_HOST or "supabase.co" in DB_HOST

@@ -46,9 +46,10 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Error no manejado: {exc}", exc_info=True)
     return JSONResponse(status_code=500, content={"detail": "Error interno del servidor."})
 
-@app.get("/", tags=["General"])
-async def root():
-    return {"sistema": "DiplomasWeb", "version": "3.0.0", "estado": "activo"}
+
+@app.get("/")
+async def read_index():
+    return FileResponse('frontend/index.html')
 
 @app.post("/generar-diploma", tags=["Diplomas"])
 async def crear_diploma(data: schemas.TitulacionCreate, db: Session = Depends(get_db)):
@@ -369,6 +370,3 @@ async def read_admin():
 @app.get("/verificar")
 async def read_verificar():
     return FileResponse('frontend/verificar.html')
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
