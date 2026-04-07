@@ -7,11 +7,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script 
+        src="/static/js/script.js">
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+    
+
 </head>
 <body>
 <div class="page-bg"></div>
+
+<header class="site-header">
+    <div class="header-inner">
+        <div class="logo">🎓 <span class="logo-text">DiplomasWeb</span></div>
+        <nav class="header-nav">
+    <a href="/" class="nav-link">Registro</a>
+    <a href="/admin" class="nav-link active">Panel Admin</a>
+    <a href="/carga-masiva" class="nav-link">Carga Masiva</a>
+    <a href="/verificacion" class="nav-link">Verificación</a>
+</nav>
+    </div>
+</header>
 
 <!-- Panel Filtros Descarga -->
 <div id="panelFiltros" style="position:fixed;top:0;right:-420px;width:400px;height:100vh;
@@ -216,16 +234,6 @@
     </div>
 </div>
 
-<header class="site-header">
-    <div class="header-inner">
-        <div class="logo">🎓 <span class="logo-text">DiplomasWeb</span></div>
-        <nav class="header-nav">
-            <a href="index.html" class="nav-link">Registro</a>
-            <a href="admin.html" class="nav-link active">Panel Admin</a>
-            <a href="carga-masiva.html" class="nav-link">Carga Masiva</a>
-        </nav>
-    </div>
-</header>
 
 <div class="admin-layout">
 
@@ -242,26 +250,26 @@
             <button class="btn-outline" onclick="abrirPanelFiltros()">
                 🎯 Filtros y Descarga
             </button>
-            <a href="index.html" class="btn-primary-sm">+ Nuevo Registro</a>
+            <a href="/" class="btn-primary-sm">+ Nuevo Registro</a>
         </div>
     </div>
 
     <!-- Stats -->
     <div class="stats-grid">
         <div class="stat-card navy">
-            <div class="stat-number" id="statTotal">—</div>
+            <div class="stat-number" id="stat-total">—</div>
             <div class="stat-label">Total Diplomas</div>
         </div>
         <div class="stat-card gold">
-            <div class="stat-number" id="statTesis">—</div>
+            <div class="stat-number" id="stat-tesis">—</div>
             <div class="stat-label">Tesis</div>
         </div>
         <div class="stat-card green">
-            <div class="stat-number" id="statTSP">—</div>
+            <div class="stat-number" id="stat-tsp">—</div>
             <div class="stat-label">TSP</div>
         </div>
         <div class="stat-card" style="border-top:3px solid #8b5cf6">
-            <div class="stat-number" id="statCarreras">—</div>
+            <div class="stat-number" id="stat-carreras">—</div>
             <div class="stat-label">Carreras</div>
         </div>
     </div>

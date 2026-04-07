@@ -353,20 +353,20 @@ def health_check():
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-# Montar archivos estáticos
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
-# Servir index.html como raíz
 @app.get("/")
-async def read_index():
-    return FileResponse('frontend/index.html')
+async def index():
+    return FileResponse("frontend/index.html")
 
-# Servir admin.html
 @app.get("/admin")
-async def read_admin():
-    return FileResponse('frontend/admin.html')
+async def admin():
+    return FileResponse("frontend/admin.html")
 
-# Servir verificar.html
 @app.get("/verificar")
-async def read_verificar():
-    return FileResponse('frontend/verificar.html')
+async def verificar():
+    return FileResponse("frontend/verificar.html")
+
+@app.get("/carga-masiva")
+async def carga():
+    return FileResponse("frontend/carga-masiva.html")
