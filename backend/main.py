@@ -3,6 +3,7 @@ import logging
 import zipfile
 import tempfile
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Depends, Request, UploadFile, File, status
@@ -21,18 +22,31 @@ logging.basicConfig(level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-models.Base.metadata.create_all(bind=engine)
+try:
+    models.Base.metadata.create_all(bind=engine)
+    logger.info("Tablas de base de datos creadas exitosamente")
+except Exception as e:
+    logger.error(f"Error creando tablas de base de datos: {e}")
+    logger.warning("El servidor iniciará sin crear tablas. Algunas funcionalidades pueden no estar disponibles.")
 
 app = FastAPI(title="DiplomasWeb — Sistema de Titulación", version="3.0.0")
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
     allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
-os.makedirs("diplomas_generados", exist_ok=True)
-app.mount("/diplomas", StaticFiles(directory="diplomas_generados"), name="diplomas")
+# Definir rutas absolutas
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+DIPLOMAS_DIR = BASE_DIR / "diplomas_generados"
 
-TEMPLATE_PATH = "templates/diploma_template.docx"
-ZIP_TEMPORAL  = "diplomas_generados/_ultimo_zip.zip"
+os.makedirs(DIPLOMAS_DIR, exist_ok=True)
+os.makedirs(FRONTEND_DIR, exist_ok=True)  # Asegurar que existe
+
+app.mount("/diplomas", StaticFiles(directory=str(DIPLOMAS_DIR)), name="diplomas")
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
+TEMPLATE_PATH = str(BASE_DIR / "templates" / "diploma_template.docx")
+ZIP_TEMPORAL = str(DIPLOMAS_DIR / "_ultimo_zip.zip")
 
 def get_db():
     db = SessionLocal()
@@ -46,10 +60,6 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Error no manejado: {exc}", exc_info=True)
     return JSONResponse(status_code=500, content={"detail": "Error interno del servidor."})
 
-
-@app.get("/")
-async def read_index():
-    return FileResponse('frontend/index.html')
 
 @app.post("/generar-diploma", tags=["Diplomas"])
 async def crear_diploma(data: schemas.TitulacionCreate, db: Session = Depends(get_db)):
@@ -348,7 +358,15 @@ async def descargar_zip():
                         media_type="application/zip")
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    try:
+        # Verificar conexión a DB
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        logger.warning(f"Database connection failed: {e}")
+        return {"status": "healthy", "database": "disconnected"}
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -357,16 +375,16 @@ app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 @app.get("/")
 async def index():
-    return FileResponse("frontend/index.html")
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 @app.get("/admin")
 async def admin():
-    return FileResponse("frontend/admin.html")
+    return FileResponse(FRONTEND_DIR / "admin.html")
 
 @app.get("/verificar")
 async def verificar():
-    return FileResponse("frontend/verificar.html")
+    return FileResponse(FRONTEND_DIR / "verificar.html")
 
 @app.get("/carga-masiva")
 async def carga():
-    return FileResponse("frontend/carga-masiva.html")
+    return FileResponse(FRONTEND_DIR / "carga-masiva.html")
