@@ -14,7 +14,7 @@ Migración completa del proyecto a una arquitectura **serverless en Vercel** con
 - PostgreSQL (Supabase)
 - Validación de entradas con `zod`
 - Procesamiento de Excel para carga masiva con `xlsx`
-- Conversión de diplomas DOCX a PDF con LibreOffice (`soffice`)
+- Generación de PDF dentro de Next.js (sin servicios externos)
 - Generación de DOCX basado en plantilla institucional existente
 
 ## Estructura
@@ -65,7 +65,6 @@ cp .env.example .env.local
 Variables importantes:
 - `SUPABASE_STORAGE_DIPLOMAS_BUCKET`: bucket privado de archivos.
 - `DOCX_TEMPLATE_PATH`: ruta del .docx base que se rellena.
-- `SOFFICE_BINARY`: binario de LibreOffice para convertir DOCX->PDF (ej: `soffice`).
 
 3. Crear el esquema inicial en Supabase SQL Editor:
 
