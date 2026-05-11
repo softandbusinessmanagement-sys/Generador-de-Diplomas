@@ -1,0 +1,18 @@
+flowchart TB
+    U[Usuario Final / Admin] -->|HTTPS| V[Vercel - Next.js App]
+    V -->|Route Handlers| S[(Supabase Postgres)]
+    V -->|Auth SDK| A[Supabase Auth]
+    V -->|RPC verify_diploma| S
+    S --> P[Políticas RLS + RBAC]
+
+    subgraph Seguridad
+      H[Headers de seguridad + CSP]
+      R[Rate limiting endpoint público]
+      M[Minificación + sin source maps]
+      E[Secretos en variables de entorno]
+    end
+
+    V --- H
+    V --- R
+    V --- M
+    V --- E

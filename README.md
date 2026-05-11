@@ -1,155 +1,126 @@
-# 🎓 DiplomasWeb — Sistema de Gestión de Titulación v2.0
+# Diplomas Web UC — Next.js + Supabase
 
-Sistema web para automatizar el proceso de titulación universitaria: registro de estudiantes, generación de diplomas en Word con código QR y panel de administración.
+Migración completa del proyecto a una arquitectura **serverless en Vercel** con:
 
----
+- **Frontend y API** en Next.js (App Router + Route Handlers).
+- **Autenticación y sesiones** con Supabase Auth.
+- **Base de datos** PostgreSQL gestionada por Supabase con RLS.
+- **Verificación pública** de diplomas por DNI o código de verificación.
 
-## 📁 Estructura del Proyecto
+## Stack principal
 
+- Next.js 14 + TypeScript
+- Supabase (`@supabase/supabase-js`, `@supabase/ssr`)
+- PostgreSQL (Supabase)
+- Validación de entradas con `zod`
+- Procesamiento de Excel para carga masiva con `xlsx`
+- Conversión de diplomas DOCX a PDF con LibreOffice (`soffice`)
+- Generación de DOCX basado en plantilla institucional existente
+
+## Estructura
+
+```text
+app/
+  api/
+    auth/logout
+    diplomas
+    diplomas/[id]
+    diplomas/masivo
+    stats
+    verify
+  dashboard/
+  login/
+  verificar/
+database/
+  initial_schema.sql
+docs/
+  requerimientos-sistema.md
+  arquitectura.md
+  seguridad.md
+  diagramas/
+    conceptual.mmd
+    logico.mmd
+    fisico.mmd
+lib/
+  auth.ts
+  validation.ts
+  rate-limit.ts
+  supabase/
 ```
-DiplomasWeb/
-├── backend/
-│   ├── __init__.py
-│   ├── main.py              # FastAPI: todos los endpoints
-│   ├── database.py          # Conexión a PostgreSQL (variables de entorno)
-│   ├── models.py            # Modelos SQLAlchemy
-│   ├── schemas.py           # Validaciones Pydantic estrictas
-│   └── services/
-│       ├── __init__.py
-│       └── diploma_generator.py  # Generación de diplomas + QR
-│
-├── frontend/
-│   ├── index.html           # Formulario de registro
-│   ├── admin.html           # Panel administrativo ← NUEVO
-│   ├── css/
-│   │   └── styles.css       # Estilos modernos
-│   └── js/
-│       └── script.js        # Validación + llamadas al API
-│
-├── templates/
-│   └── diploma_template.docx  # Plantilla Word con marcadores {{campo}}
-│
-├── diplomas_generados/      # Carpeta donde se guardan los diplomas (auto-creada)
-├── .env                     # Variables de entorno (NO subir al repo)
-├── .env.example             # Ejemplo de configuración
-├── requirements.txt
-└── README.md
-```
 
----
+## Configuración local
 
-## ⚙️ Instalación
-
-### 1. Clonar y configurar el entorno
+1. Instalar dependencias:
 
 ```bash
-cd DiplomasWeb
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux / macOS
-source venv/bin/activate
-
-pip install -r requirements.txt
+npm install
 ```
 
-### 2. Configurar variables de entorno
+2. Configurar variables de entorno:
 
 ```bash
-# Copia el archivo de ejemplo
-copy .env.example .env      # Windows
-cp .env.example .env        # Linux/macOS
-
-# Edita .env con tus datos de PostgreSQL
+cp .env.example .env.local
 ```
 
-Contenido del `.env`:
-```env
-DB_USER=postgres
-DB_PASSWORD=tu_contraseña_real
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=diplomas
-ALLOWED_ORIGINS=http://localhost:5500,http://127.0.0.1:5500
-```
+Variables importantes:
+- `SUPABASE_STORAGE_DIPLOMAS_BUCKET`: bucket privado de archivos.
+- `DOCX_TEMPLATE_PATH`: ruta del .docx base que se rellena.
+- `SOFFICE_BINARY`: binario de LibreOffice para convertir DOCX->PDF (ej: `soffice`).
 
-### 3. Crear la base de datos en PostgreSQL
+3. Crear el esquema inicial en Supabase SQL Editor:
 
 ```sql
-CREATE DATABASE diplomas;
+-- pegar contenido de database/initial_schema.sql
 ```
 
-Las tablas se crean automáticamente al iniciar el servidor.
+4. Verificar bucket de Storage para PDFs:
 
-### 4. Iniciar el servidor
+- Bucket privado: `diplomas` (o el nombre de `SUPABASE_STORAGE_DIPLOMAS_BUCKET`)
+- Políticas para usuarios autenticados administradores (incluidas en `database/initial_schema.sql`)
+
+5. Plantilla DOCX:
+
+- El sistema rellena marcadores con formato `[Campo]` dentro del archivo DOCX.
+- Marcadores detectados en tu plantilla actual:
+  - `[Nombres]`
+  - `[Apellido paterno]`
+  - `[Apellido Materno]`
+  - `[Facultad]`
+  - `[Escuela profesional]`
+  - `[Tema]`
+  - `[Fecha de evento]`
+  - `[Fecha de emisión]`
+
+5. Ejecutar la app:
 
 ```bash
-# Desde la raíz del proyecto
-uvicorn backend.main:app --reload
+npm run dev
 ```
 
-El servidor estará en: `http://127.0.0.1:8000`  
-Documentación automática: `http://127.0.0.1:8000/docs`
+## Despliegue en Vercel
 
-### 5. Abrir el frontend
+1. Conectar repositorio a Vercel.
+2. Configurar variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_APP_URL` (URL de producción)
+   - `SUPABASE_STORAGE_DIPLOMAS_BUCKET` (por defecto: `diplomas`)
+3. Deploy.
 
-Abre `frontend/index.html` en tu navegador (o usa Live Server en VS Code).
+## Seguridad aplicada
 
----
+- RLS habilitado y políticas por rol (administrador activo / principal).
+- Endpoint público de verificación sin acceso directo a tablas sensibles.
+- Función SQL controlada (`verify_diploma`) para minimizar exposición de datos.
+- Validación fuerte de payloads con Zod en endpoints internos.
+- Rate limiting en verificación pública.
+- Hardening HTTP headers + CSP.
+- `productionBrowserSourceMaps: false` y minificación en producción para dificultar inspección del código distribuido.
 
-## 🌐 Endpoints del API
+## Archivos de diseño y base de datos
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/` | Estado del servidor |
-| POST | `/generar-diploma` | Registra y genera un diploma |
-| GET | `/validar/{dni}` | Valida un diploma por DNI (usado por QR) |
-| GET | `/admin/diplomas` | Lista todos los diplomas (con búsqueda) |
-| GET | `/admin/diplomas/{id}` | Obtiene un diploma por ID |
-| DELETE | `/admin/diplomas/{id}` | Elimina un diploma |
-| GET | `/admin/estadisticas` | Estadísticas generales |
-| GET | `/admin/descargar/{dni}` | Descarga el archivo .docx |
-
----
-
-## 📄 Plantilla del Diploma
-
-La plantilla `templates/diploma_template.docx` usa los siguientes marcadores:
-
-| Marcador | Descripción |
-|----------|-------------|
-| `{{nombre}}` | Nombre(s) del estudiante |
-| `{{apellidos}}` | Apellidos del estudiante |
-| `{{dni}}` | DNI del estudiante |
-| `{{carrera}}` | Carrera profesional |
-| `{{modalidad}}` | Tesis o TSP |
-| `{{titulo_trabajo}}` | Título del trabajo de titulación |
-| `{{asesor}}` | Nombre del asesor |
-| `{{fecha}}` | Fecha en formato original |
-| `{{fecha_formato}}` | Fecha formateada en español (ej: 15 de junio de 2025) |
-
----
-
-## ✅ Mejoras en v2.0
-
-- **Seguridad:** Credenciales DB via variables de entorno, CORS configurable
-- **Validación estricta:** DNI de 8 dígitos, solo letras en nombres, modalidad verificada
-- **Manejo de errores:** Respuestas claras para duplicados (409), validación (422) y errores internos (500)
-- **Panel Admin:** Listar, buscar, descargar y eliminar diplomas
-- **Validación QR:** Endpoint `/validar/{dni}` para escaneo de código QR
-- **Generación mejorada:** Reemplaza marcadores en runs individuales (respeta formato Word)
-- **Fecha en español:** Marcador `{{fecha_formato}}` disponible en plantilla
-- **Descarga directa:** Botón de descarga del diploma desde el frontend
-- **Frontend profesional:** Validación en tiempo real, diseño moderno, feedback visual
-
----
-
-## 🔮 Próximos Pasos
-
-- [ ] Autenticación JWT para el panel administrativo
-- [ ] Subir diplomas a Supabase Storage (nube)
-- [ ] Generación masiva desde Excel
-- [ ] Exportar listado de diplomas a Excel/PDF
-"# Diplomas-web"  
+- Requerimientos: `docs/requerimientos-sistema.md`
+- Arquitectura: `docs/arquitectura.md`
+- Seguridad: `docs/seguridad.md`
+- Diagramas: `docs/diagramas/*.mmd`
+- Schema inicial: `database/initial_schema.sql`

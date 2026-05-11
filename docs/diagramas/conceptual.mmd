@@ -1,0 +1,35 @@
+erDiagram
+    USUARIO_AUTH ||--|| ADMINISTRADOR : "es"
+    ADMINISTRADOR ||--o{ DIPLOMA : "registra"
+    PERSONA ||--o{ DIPLOMA : "recibe"
+
+    USUARIO_AUTH {
+      uuid id
+      string email
+    }
+
+    ADMINISTRADOR {
+      uuid id
+      string nombres
+      string apellidos
+      string rol
+      boolean activo
+    }
+
+    PERSONA {
+      uuid id
+      string dni
+      string nombre_completo
+      string correo
+      string telefono
+    }
+
+    DIPLOMA {
+      uuid id
+      string codigo_diploma
+      string codigo_verificacion
+      string tipo_diploma
+      string titulo_o_logro
+      date fecha_emision
+      string estado
+    }
