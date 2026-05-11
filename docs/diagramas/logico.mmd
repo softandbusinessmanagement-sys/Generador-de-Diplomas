@@ -1,0 +1,56 @@
+erDiagram
+    ADMINISTRADORES ||--o{ DIPLOMAS : "registrado_por"
+    PERSONAS ||--o{ DIPLOMAS : "persona_id"
+
+    ADMINISTRADORES {
+      uuid id PK "FK -> auth.users.id"
+      varchar nombres
+      varchar apellidos
+      varchar correo UNIQUE
+      varchar rol "principal|secundario"
+      boolean activo
+      timestamptz created_at
+      timestamptz updated_at
+    }
+
+    PERSONAS {
+      uuid id PK
+      varchar dni UNIQUE
+      varchar nombres
+      varchar apellido_paterno
+      varchar apellido_materno NULL
+      varchar nombre_completo
+      varchar correo NULL
+      varchar telefono NULL
+      date fecha_nacimiento NULL
+      timestamptz created_at
+      timestamptz updated_at
+    }
+
+    DIPLOMAS {
+      uuid id PK
+      uuid persona_id FK
+      uuid registrado_por FK
+      varchar codigo_diploma UNIQUE
+      varchar codigo_verificacion UNIQUE
+      varchar tipo_diploma
+      varchar categoria NULL
+      varchar titulo_o_logro
+      text descripcion NULL
+      varchar institucion_emisora
+      varchar facultad NULL
+      varchar escuela_profesional NULL
+      varchar carrera NULL
+      varchar modalidad NULL
+      varchar tema NULL
+      date fecha_emision
+      date fecha_evento NULL
+      varchar numero_resolucion NULL
+      text qr_url NULL
+      text archivo_docx_url NULL
+      text archivo_pdf_url NULL
+      varchar estado "generado|verificado|anulado"
+      text observaciones NULL
+      timestamptz created_at
+      timestamptz updated_at
+    }
