@@ -5,7 +5,7 @@ import { requireAdminRoute } from "@/lib/auth";
 import { asNullable, diplomaCreateSchema } from "@/lib/validation";
 import { handleRouteError, jsonError } from "@/lib/http";
 import { buildDocxFromTemplate, buildTemplateData } from "@/lib/docx-template";
-import { convertDocxBytesToPdf } from "@/lib/docx-to-pdf";
+import { buildDiplomaPdf } from "@/lib/pdf-diploma";
 import { buildDiplomaDocxPath, buildDiplomaPdfPath, getDiplomaBucket } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -191,15 +191,20 @@ export async function POST(request: Request) {
           continue;
         }
 
-        let pdfBytes: Uint8Array;
-        try {
-          pdfBytes = await convertDocxBytesToPdf(docxBytes);
-        } catch {
-          await supabase.storage.from(bucket).remove([docxPath]);
-          failed += 1;
-          warnings.push(`Fila ${i + 2}: no se pudo convertir DOCX a PDF (instale LibreOffice).`);
-          continue;
-        }
+        const pdfBytes = await buildDiplomaPdf({
+          codigoDiploma: diplomaCode,
+          codigoVerificacion: verificationCode,
+          verificationUrl: qrUrl,
+          nombres: payload.nombres,
+          apellidoPaterno: payload.apellidoPaterno,
+          apellidoMaterno: asNullable(payload.apellidoMaterno),
+          facultad: asNullable(payload.facultad),
+          escuelaProfesional: asNullable(payload.escuelaProfesional),
+          tituloLogro: payload.tituloLogro,
+          fechaEvento: asNullable(payload.fechaEvento),
+          fechaEmision: payload.fechaEmision,
+          institucionEmisora: DEFAULT_INSTITUTION
+        });
 
         const { error: uploadPdfError } = await supabase.storage.from(bucket).upload(pdfPath, pdfBytes, {
           contentType: "application/pdf",
@@ -209,7 +214,7 @@ export async function POST(request: Request) {
         if (uploadPdfError) {
           await supabase.storage.from(bucket).remove([docxPath]);
           failed += 1;
-          warnings.push(`Fila ${i + 2}: no se pudo subir PDF convertido.`);
+          warnings.push(`Fila ${i + 2}: no se pudo generar/subir PDF.`);
           continue;
         }
 

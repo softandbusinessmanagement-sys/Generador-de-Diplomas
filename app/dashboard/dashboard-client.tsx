@@ -161,10 +161,6 @@ export function DashboardClient() {
     await refreshAll();
   }
 
-  function handleDownloadPdf(item: DiplomaItem) {
-    window.open(`/api/diplomas/${item.id}/pdf`, "_blank", "noopener,noreferrer");
-  }
-
   function handleDownloadDocx(item: DiplomaItem) {
     window.open(`/api/diplomas/${item.id}/docx`, "_blank", "noopener,noreferrer");
   }
@@ -403,14 +399,6 @@ export function DashboardClient() {
                           type="button"
                         >
                           DOCX
-                        </button>
-                        <button
-                          className="button secondary"
-                          disabled={!item.hasPdf}
-                          onClick={() => void handleDownloadPdf(item)}
-                          type="button"
-                        >
-                          PDF
                         </button>
                         <button className="button danger" onClick={() => void handleCancel(item.id)} type="button">
                           Anular
