@@ -1,131 +1,62 @@
-# Diplomas Web UC — Next.js + Supabase
+# Diplomas Web UC
 
-Migración completa del proyecto a una arquitectura **serverless en Vercel** con:
-
-- **Frontend y API** en Next.js (App Router + Route Handlers).
-- **Autenticación y sesiones** con Supabase Auth.
-- **Base de datos** PostgreSQL gestionada por Supabase con RLS.
-- **Verificación pública** de diplomas por DNI o código de verificación.
-
-## Stack principal
-
-- Next.js 14 + TypeScript
-- Supabase (`@supabase/supabase-js`, `@supabase/ssr`)
-- PostgreSQL (Supabase)
-- Validación de entradas con `zod`
-- Procesamiento de Excel para carga masiva con `xlsx`
-- Generación de PDF dentro de Next.js (sin servicios externos)
-- Generación de DOCX basado en plantilla institucional existente
+Sistema de gestión y verificación de diplomas construido con Next.js 16, TypeScript y Supabase.
 
 ## Estructura
 
-```text
-app/
-  api/
-    auth/logout
-    diplomas
-    diplomas/[id]
-    diplomas/masivo
-    stats
-    verify
-  dashboard/
-  login/
-  verificar/
-database/
-  initial_schema.sql
-docs/
-  requerimientos-sistema.md
-  arquitectura.md
-  seguridad.md
-  diagramas/
-    conceptual.mmd
-    logico.mmd
-    fisico.mmd
-lib/
-  auth.ts
-  validation.ts
-  rate-limit.ts
-  supabase/
-```
+- `app/`: páginas, dashboard y Route Handlers de la API.
+- `lib/`: autenticación, acceso a Supabase, validación y generación de documentos.
+- `database/`: esquema inicial y migraciones SQL incrementales.
+- `templates/`: plantilla DOCX usada al generar diplomas.
+- `public/templates/`: archivos descargables desde la aplicación, incluida la plantilla Excel.
+- `docs/`: requerimientos, arquitectura, seguridad, diagramas y referencias técnicas.
 
-## Configuración local
+## Inicio local
 
-1. Instalar dependencias:
+1. Instala Node.js compatible con la versión de Next.js del proyecto y ejecuta `npm install`.
+2. Copia `.env.example` a `.env.local` y configura la URL y la clave pública de Supabase. No publiques `.env.local` ni agregues claves `service_role` al navegador.
+3. En Supabase SQL Editor, ejecuta en este orden:
+   - `database/initial_schema.sql` para una base nueva.
+   - Las migraciones de `database/migrations/` en orden de fecha. En particular, la búsqueda paginada requiere `20261012_admin_diplomas_search_pagination.sql`.
+4. En Supabase Auth, crea el usuario inicial. Luego agrega su perfil a `public.administradores`, usando el UUID del usuario Auth:
 
-```bash
-npm install
-```
+   ```sql
+   INSERT INTO public.administradores (id, nombres, apellidos, correo, rol, activo)
+   VALUES ('UUID_DEL_USUARIO_AUTH', 'Nombre', 'Apellido', 'admin@ejemplo.edu', 'principal', true);
+   ```
 
-2. Configurar variables de entorno:
+5. Confirma que exista el bucket privado `diplomas` y sus políticas (incluidas en el esquema inicial). Si usas otro nombre, define `SUPABASE_STORAGE_DIPLOMAS_BUCKET`.
+6. La plantilla DOCX está en `templates/diploma-template.docx`. Sustituye ese archivo para personalizar el diseño y conserva sus marcadores entre corchetes.
+7. Inicia la aplicación con `npm run dev` y abre `http://localhost:3000`.
 
-```bash
-cp .env.example .env.local
-```
+## Uso
 
-Variables importantes:
-- `SUPABASE_STORAGE_DIPLOMAS_BUCKET`: bucket privado de archivos.
-- `DOCX_TEMPLATE_PATH`: ruta del .docx base que se rellena.
-- Para bases de datos existentes, aplicar también `database/migrations/20260930_add_rol_to_diplomas.sql` antes de desplegar la captura del rol.
+1. Ingresa a `/login` con el usuario creado en Supabase Auth.
+2. En `/dashboard`, registra diplomas individualmente o descarga `Descargar plantilla Excel`, completa la primera hoja y procesa el archivo `.xlsx`.
+3. Revisa los errores de filas que se muestran al finalizar una carga parcial.
+4. Busca por DNI, nombre, código o título; usa los controles de página para navegar por todos los resultados.
+5. La verificación pública está en `/verificar`. La anulación está disponible desde el listado administrativo.
 
-3. Crear el esquema inicial en Supabase SQL Editor:
+La plantilla Excel descargable incluye una fila de ejemplo. Las columnas obligatorias son `dni`, `nombres`, `apellido_paterno`, `tipo_diploma`, `titulo_o_logro` y `fecha_emision`. Usa fechas `AAAA-MM-DD` o fechas válidas de Excel; elimina o reemplaza la fila de ejemplo antes de importar.
 
-```sql
--- pegar contenido de database/initial_schema.sql
-```
+## Variables de entorno
 
-4. Verificar bucket de Storage para PDFs:
+Consulta `.env.example`. Variables usadas por el servidor:
 
-- Bucket privado: `diplomas` (o el nombre de `SUPABASE_STORAGE_DIPLOMAS_BUCKET`)
-- Políticas para usuarios autenticados administradores (incluidas en `database/initial_schema.sql`)
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_APP_URL` (base usada en enlaces QR)
+- `SUPABASE_STORAGE_DIPLOMAS_BUCKET` (opcional; por defecto `diplomas`)
 
-5. Plantilla DOCX:
+## Despliegue
 
-- El sistema rellena marcadores con formato `[Campo]` dentro del archivo DOCX.
-- Marcadores detectados en tu plantilla actual:
-  - `[Tipo_Doc]`
-  - `[Rol]`
-  - `[Nombres]`
-  - `[Apellido paterno]`
-  - `[Apellido Materno]`
-  - `[Facultad]`
-  - `[Escuela profesional]`
-  - `[Tema]`
-  - `[Fecha de evento]`
-  - `[Fecha de emisión]`
-  - `[Codigo Diploma]`
+Configura las mismas variables en el entorno de despliegue, agrega la plantilla DOCX al paquete y aplica todas las migraciones SQL antes de habilitar el dashboard. El bucket de archivos debe ser privado. Nunca uses una clave privilegiada de Supabase en variables `NEXT_PUBLIC_*`.
 
-El rol se captura por diploma y también puede enviarse en la columna `rol` al importar Excel. Ejemplos: ponente, participante, organizador o expositor.
-
-5. Ejecutar la app:
-
-```bash
-npm run dev
-```
-
-## Despliegue en Vercel
-
-1. Conectar repositorio a Vercel.
-2. Configurar variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_APP_URL` (URL de producción)
-   - `SUPABASE_STORAGE_DIPLOMAS_BUCKET` (por defecto: `diplomas`)
-3. Deploy.
-
-## Seguridad aplicada
-
-- RLS habilitado y políticas por rol (administrador activo / principal).
-- Endpoint público de verificación sin acceso directo a tablas sensibles.
-- Función SQL controlada (`verify_diploma`) para minimizar exposición de datos.
-- Validación fuerte de payloads con Zod en endpoints internos.
-- Rate limiting en verificación pública.
-- Hardening HTTP headers + CSP.
-- `productionBrowserSourceMaps: false` y minificación en producción para dificultar inspección del código distribuido.
-
-## Archivos de diseño y base de datos
+## Documentación
 
 - Requerimientos: `docs/requerimientos-sistema.md`
 - Arquitectura: `docs/arquitectura.md`
 - Seguridad: `docs/seguridad.md`
-- Diagramas: `docs/diagramas/*.mmd`
-- Schema inicial: `database/initial_schema.sql`
+- Diagramas: `docs/diagramas/`
+- Documentación técnica de referencia: `docs/referencias/documentacion-tecnica.docx`
+- Plan de acción: `docs/plan-accion.md`

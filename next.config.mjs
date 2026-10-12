@@ -27,11 +27,13 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  swcMinify: true,
   productionBrowserSourceMaps: false,
+  experimental: {
+    useTypeScriptCli: false
+  },
   outputFileTracingIncludes: {
-    "/api/diplomas": ["./PONENCIA PRESENCIA - JAIRO VARGAS (2).docx"],
-    "/api/diplomas/masivo": ["./PONENCIA PRESENCIA - JAIRO VARGAS (2).docx"]
+    "/api/diplomas": ["./templates/diploma-template.docx"],
+    "/api/diplomas/masivo": ["./templates/diploma-template.docx"]
   },
   compiler:
     process.env.NODE_ENV === "production"

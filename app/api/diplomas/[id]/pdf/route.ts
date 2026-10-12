@@ -5,14 +5,15 @@ import { getDiplomaBucket } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { supabase } = await requireAdminRoute();
 
     const { data: diploma, error } = await supabase
       .from("diplomas")
       .select("id, codigo_diploma, archivo_pdf_url")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (error || !diploma) {

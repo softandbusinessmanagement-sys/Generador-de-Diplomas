@@ -16,6 +16,23 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const DEFAULT_INSTITUTION = "Universidad Continental";
+type AdminDiplomaPageRow = {
+  id: string;
+  codigo_diploma: string;
+  codigo_verificacion: string;
+  tipo_diploma: string;
+  titulo_o_logro: string;
+  carrera: string | null;
+  modalidad: string | null;
+  fecha_emision: string;
+  estado: "generado" | "verificado" | "anulado";
+  created_at: string;
+  archivo_pdf_url: string | null;
+  archivo_docx_url: string | null;
+  beneficiario_dni: string;
+  beneficiario_nombre: string;
+  total_count: number;
+};
 
 function fullName(nombres: string, apellidoPaterno: string, apellidoMaterno?: string) {
   return [nombres, apellidoPaterno, apellidoMaterno].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
@@ -25,60 +42,41 @@ export async function GET(request: Request) {
   try {
     const { supabase } = await requireAdminRoute();
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get("q")?.trim().toLowerCase();
-
-    const { data: diplomas, error: diplomasError } = await supabase
-      .from("diplomas")
-      .select(
-        "id, persona_id, codigo_diploma, codigo_verificacion, tipo_diploma, titulo_o_logro, carrera, modalidad, fecha_emision, estado, created_at, archivo_pdf_url, archivo_docx_url"
-      )
-      .order("created_at", { ascending: false })
-      .limit(250);
-
-    if (diplomasError) {
-      return jsonError(500, "No se pudo listar diplomas.");
-    }
-
-    const personaIds = [...new Set((diplomas ?? []).map((d) => d.persona_id))];
-    const { data: personas, error: personasError } =
-      personaIds.length === 0
-        ? { data: [], error: null }
-        : await supabase.from("personas").select("id, dni, nombre_completo").in("id", personaIds);
-
-    if (personasError) {
-      return jsonError(500, "No se pudo listar diplomas.");
-    }
-
-    const personById = new Map((personas ?? []).map((p) => [p.id, p]));
-    const items = (diplomas ?? []).map((diploma) => {
-      const persona = personById.get(diploma.persona_id);
-      return {
-        id: diploma.id,
-        codigoDiploma: diploma.codigo_diploma,
-        codigoVerificacion: diploma.codigo_verificacion,
-        tipoDiploma: diploma.tipo_diploma,
-        tituloLogro: diploma.titulo_o_logro,
-        carrera: diploma.carrera,
-        modalidad: diploma.modalidad,
-        fechaEmision: diploma.fecha_emision,
-        estado: diploma.estado,
-        createdAt: diploma.created_at,
-        hasPdf: Boolean(diploma.archivo_pdf_url),
-        hasDocx: Boolean(diploma.archivo_docx_url),
-        beneficiarioDni: persona?.dni ?? "",
-        beneficiarioNombre: persona?.nombre_completo ?? ""
-      };
+    const query = (searchParams.get("q") ?? "").trim().slice(0, 100);
+    const requestedPage = Number.parseInt(searchParams.get("page") ?? "1", 10);
+    const page = Number.isFinite(requestedPage)
+      ? Math.min(21_474_836, Math.max(1, requestedPage))
+      : 1;
+    const pageSize = 25;
+    const { data, error } = await supabase.rpc("get_admin_diplomas_page", {
+      p_query: query,
+      p_limit: pageSize,
+      p_offset: (page - 1) * pageSize
     });
 
-    const filtered = search
-      ? items.filter((item) =>
-          [item.codigoDiploma, item.codigoVerificacion, item.beneficiarioDni, item.beneficiarioNombre, item.tituloLogro]
-            .filter(Boolean)
-            .some((value) => value.toLowerCase().includes(search))
-        )
-      : items;
+    if (error) {
+      return jsonError(500, "No se pudo listar diplomas. Aplique la migración de búsqueda y paginación.");
+    }
 
-    return NextResponse.json({ items: filtered });
+    const rows = (data ?? []) as AdminDiplomaPageRow[];
+    const items = rows.map((diploma) => ({
+      id: diploma.id,
+      codigoDiploma: diploma.codigo_diploma,
+      codigoVerificacion: diploma.codigo_verificacion,
+      tipoDiploma: diploma.tipo_diploma,
+      tituloLogro: diploma.titulo_o_logro,
+      carrera: diploma.carrera,
+      modalidad: diploma.modalidad,
+      fechaEmision: diploma.fecha_emision,
+      estado: diploma.estado,
+      createdAt: diploma.created_at,
+      hasPdf: Boolean(diploma.archivo_pdf_url),
+      hasDocx: Boolean(diploma.archivo_docx_url),
+      beneficiarioDni: diploma.beneficiario_dni,
+      beneficiarioNombre: diploma.beneficiario_nombre
+    }));
+
+    return NextResponse.json({ items, page, pageSize, total: Number(rows[0]?.total_count ?? 0) });
   } catch (error) {
     return handleRouteError(error);
   }

@@ -1,7 +1,6 @@
 import "server-only";
 
 import fs from "node:fs/promises";
-import path from "node:path";
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 
@@ -50,20 +49,10 @@ export function buildTemplateData(payload: {
   };
 }
 
-function getTemplatePath() {
-  const customPath = process.env.DOCX_TEMPLATE_PATH?.trim();
-  if (customPath) {
-    return path.isAbsolute(customPath)
-      ? customPath
-      : path.join(process.cwd(), customPath);
-  }
-
-  return path.join(process.cwd(), "PONENCIA PRESENCIA - JAIRO VARGAS (2).docx");
-}
-
 export async function buildDocxFromTemplate(templateData: Record<string, string>) {
-  const templatePath = getTemplatePath();
-  const fileBuffer = await fs.readFile(templatePath);
+  const fileBuffer = await fs.readFile(
+    `${process.cwd()}/templates/diploma-template.docx`
+  );
   const zip = new PizZip(fileBuffer);
   const doc = new Docxtemplater(zip, {
     delimiters: {

@@ -9,8 +9,9 @@ function fullName(nombres: string, apellidoPaterno: string, apellidoMaterno?: st
   return [nombres, apellidoPaterno, apellidoMaterno ?? undefined].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { supabase } = await requireAdminRoute();
     const body = await request.json();
     const parsed = diplomaUpdateSchema.safeParse(body);
@@ -24,7 +25,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const { data: current, error: currentError } = await supabase
       .from("diplomas")
       .select("id, persona_id")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (currentError || !current) {
@@ -96,7 +97,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       Object.entries(diplomaUpdate).filter(([, value]) => value !== undefined)
     );
 
-    const { error: updateDiplomaError } = await supabase.from("diplomas").update(filteredUpdate).eq("id", params.id);
+    const { error: updateDiplomaError } = await supabase.from("diplomas").update(filteredUpdate).eq("id", id);
 
     if (updateDiplomaError) {
       return jsonError(500, "No se pudo actualizar el diploma.");
@@ -108,10 +109,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { supabase } = await requireAdminRoute();
-    const { error } = await supabase.from("diplomas").update({ estado: "anulado" }).eq("id", params.id);
+    const { error } = await supabase.from("diplomas").update({ estado: "anulado" }).eq("id", id);
 
     if (error) {
       return jsonError(500, "No se pudo anular el diploma.");

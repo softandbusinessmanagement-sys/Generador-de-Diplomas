@@ -152,6 +152,31 @@ export type Database = {
       };
     };
     Functions: {
+      get_admin_diplomas_page: {
+        Args: {
+          p_query: string;
+          p_limit: number;
+          p_offset: number;
+        };
+        Returns: Array<{
+          id: string;
+          persona_id: string;
+          codigo_diploma: string;
+          codigo_verificacion: string;
+          tipo_diploma: string;
+          titulo_o_logro: string;
+          carrera: string | null;
+          modalidad: string | null;
+          fecha_emision: string;
+          estado: DiplomaStatus;
+          created_at: string;
+          archivo_pdf_url: string | null;
+          archivo_docx_url: string | null;
+          beneficiario_dni: string;
+          beneficiario_nombre: string;
+          total_count: number;
+        }>;
+      };
       verify_diploma: {
         Args: {
           p_input: string;

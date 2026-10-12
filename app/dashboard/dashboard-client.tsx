@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type DiplomaItem = {
@@ -51,27 +51,23 @@ export function DashboardClient() {
   const [items, setItems] = useState<DiplomaItem[]>([]);
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
+  const [bulkWarnings, setBulkWarnings] = useState<string[]>([]);
 
-  const visibleItems = useMemo(() => {
-    if (!search.trim()) {
-      return items;
-    }
-    const q = search.toLowerCase();
-    return items.filter((item) =>
-      [item.codigoDiploma, item.codigoVerificacion, item.beneficiarioDni, item.beneficiarioNombre, item.tituloLogro]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(q))
-    );
-  }, [items, search]);
-
-  async function refreshAll() {
+  const refreshAll = useCallback(async () => {
     setError(null);
-    const [itemsRes, statsRes] = await Promise.all([fetch("/api/diplomas"), fetch("/api/stats")]);
+    const params = new URLSearchParams({ page: String(page) });
+    if (search.trim()) params.set("q", search.trim());
+    const [itemsRes, statsRes] = await Promise.all([
+      fetch(`/api/diplomas?${params.toString()}`),
+      fetch("/api/stats")
+    ]);
     const itemsPayload = await itemsRes.json().catch(() => null);
     const statsPayload = await statsRes.json().catch(() => null);
 
@@ -86,12 +82,16 @@ export function DashboardClient() {
     }
 
     setItems((itemsPayload?.items as DiplomaItem[]) ?? []);
+    setTotal(Number(itemsPayload?.total ?? 0));
     setStats((statsPayload as Stats) ?? EMPTY_STATS);
-  }
+  }, [page, search]);
 
   useEffect(() => {
-    void refreshAll();
-  }, []);
+    const timer = window.setTimeout(() => void refreshAll(), 250);
+    return () => window.clearTimeout(timer);
+  }, [refreshAll]);
+
+  const totalPages = Math.max(1, Math.ceil(total / 25));
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -171,6 +171,7 @@ export function DashboardClient() {
     const form = event.currentTarget;
     setBulkLoading(true);
     setBulkMessage(null);
+    setBulkWarnings([]);
     setError(null);
 
     const formData = new FormData(form);
@@ -197,6 +198,9 @@ export function DashboardClient() {
     const created = Number((data as { created?: number }).created ?? 0);
     const failed = Number((data as { failed?: number }).failed ?? 0);
     setBulkMessage(`Carga completada: ${created}/${totalRows} registros creados. Fallidos: ${failed}.`);
+    setBulkWarnings(Array.isArray((data as { warnings?: unknown }).warnings)
+      ? ((data as { warnings: string[] }).warnings).slice(0, 100)
+      : []);
     setBulkLoading(false);
     form.reset();
     await refreshAll();
@@ -332,12 +336,19 @@ export function DashboardClient() {
           titulo_o_logro y fecha_emision.
         </p>
         <form className="row" style={{ marginTop: "0.8rem" }} onSubmit={handleBulkUpload}>
+          <a href="/templates/plantilla-diplomas.xlsx" download>Descargar plantilla Excel</a>
           <input type="file" name="file" accept=".xlsx,.xls" required />
           <button className="button secondary" disabled={bulkLoading} type="submit">
             {bulkLoading ? "Procesando..." : "Procesar archivo"}
           </button>
         </form>
         {bulkMessage ? <p className="muted">{bulkMessage}</p> : null}
+        {bulkWarnings.length > 0 ? (
+          <details>
+            <summary>Ver errores de filas (mostrando hasta 100)</summary>
+            <ul>{bulkWarnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul>
+          </details>
+        ) : null}
       </section>
 
       <section className="card">
@@ -345,7 +356,10 @@ export function DashboardClient() {
           <h2>Listado de diplomas</h2>
           <input
             aria-label="Buscar diplomas"
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
             placeholder="Buscar por DNI, código o nombre"
             style={{ maxWidth: 340 }}
             value={search}
@@ -364,14 +378,14 @@ export function DashboardClient() {
               </tr>
             </thead>
             <tbody>
-              {visibleItems.length === 0 ? (
+              {items.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="muted">
                     Sin registros.
                   </td>
                 </tr>
               ) : (
-                visibleItems.map((item) => (
+                items.map((item) => (
                   <tr key={item.id}>
                     <td>
                       <strong>{item.beneficiarioNombre}</strong>
@@ -415,6 +429,13 @@ export function DashboardClient() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="row" style={{ justifyContent: "space-between", marginTop: "0.8rem" }}>
+          <span className="muted">{total} resultados · Página {page} de {totalPages}</span>
+          <div className="row">
+            <button className="button secondary" disabled={page <= 1} onClick={() => setPage((value) => value - 1)} type="button">Anterior</button>
+            <button className="button secondary" disabled={page >= totalPages} onClick={() => setPage((value) => value + 1)} type="button">Siguiente</button>
+          </div>
         </div>
       </section>
 
