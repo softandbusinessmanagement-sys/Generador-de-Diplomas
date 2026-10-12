@@ -60,3 +60,4 @@ Configura las mismas variables en el entorno de despliegue, agrega la plantilla 
 - Diagramas: `docs/diagramas/`
 - Documentación técnica de referencia: `docs/referencias/documentacion-tecnica.docx`
 - Plan de acción: `docs/plan-accion.md`
+# Generador-de-Diplomas
