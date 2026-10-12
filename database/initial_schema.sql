@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS public.diplomas (
   codigo_diploma VARCHAR(50) NOT NULL UNIQUE,
   codigo_verificacion VARCHAR(100) NOT NULL UNIQUE,
   tipo_diploma VARCHAR(50) NOT NULL,
+  rol VARCHAR(100),
   categoria VARCHAR(50),
   titulo_o_logro VARCHAR(255) NOT NULL,
   descripcion TEXT,

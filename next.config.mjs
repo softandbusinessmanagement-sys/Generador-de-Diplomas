@@ -29,6 +29,10 @@ const nextConfig = {
   poweredByHeader: false,
   swcMinify: true,
   productionBrowserSourceMaps: false,
+  outputFileTracingIncludes: {
+    "/api/diplomas": ["./PONENCIA PRESENCIA - JAIRO VARGAS (2).docx"],
+    "/api/diplomas/masivo": ["./PONENCIA PRESENCIA - JAIRO VARGAS (2).docx"]
+  },
   compiler:
     process.env.NODE_ENV === "production"
       ? {

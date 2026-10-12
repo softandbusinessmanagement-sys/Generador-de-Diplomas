@@ -109,6 +109,7 @@ export function DashboardClient() {
       correo: String(formData.get("correo") ?? ""),
       telefono: String(formData.get("telefono") ?? ""),
       tipoDiploma: String(formData.get("tipoDiploma") ?? ""),
+      rol: String(formData.get("rol") ?? ""),
       categoria: String(formData.get("categoria") ?? ""),
       tituloLogro: String(formData.get("tituloLogro") ?? ""),
       descripcion: String(formData.get("descripcion") ?? ""),
@@ -244,6 +245,10 @@ export function DashboardClient() {
             <div>
               <label htmlFor="tipoDiploma">Tipo diploma *</label>
               <input id="tipoDiploma" name="tipoDiploma" required defaultValue="TITULACION" />
+            </div>
+            <div>
+              <label htmlFor="rol">Rol o participación</label>
+              <input id="rol" name="rol" placeholder="Ponente, participante, organizador…" />
             </div>
             <div>
               <label htmlFor="nombres">Nombres *</label>

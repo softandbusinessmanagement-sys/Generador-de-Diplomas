@@ -65,6 +65,7 @@ cp .env.example .env.local
 Variables importantes:
 - `SUPABASE_STORAGE_DIPLOMAS_BUCKET`: bucket privado de archivos.
 - `DOCX_TEMPLATE_PATH`: ruta del .docx base que se rellena.
+- Para bases de datos existentes, aplicar también `database/migrations/20260930_add_rol_to_diplomas.sql` antes de desplegar la captura del rol.
 
 3. Crear el esquema inicial en Supabase SQL Editor:
 
@@ -81,6 +82,8 @@ Variables importantes:
 
 - El sistema rellena marcadores con formato `[Campo]` dentro del archivo DOCX.
 - Marcadores detectados en tu plantilla actual:
+  - `[Tipo_Doc]`
+  - `[Rol]`
   - `[Nombres]`
   - `[Apellido paterno]`
   - `[Apellido Materno]`
@@ -89,6 +92,9 @@ Variables importantes:
   - `[Tema]`
   - `[Fecha de evento]`
   - `[Fecha de emisión]`
+  - `[Codigo Diploma]`
+
+El rol se captura por diploma y también puede enviarse en la columna `rol` al importar Excel. Ejemplos: ponente, participante, organizador o expositor.
 
 5. Ejecutar la app:
 

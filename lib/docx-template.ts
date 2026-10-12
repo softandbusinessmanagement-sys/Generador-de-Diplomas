@@ -31,8 +31,14 @@ export function buildTemplateData(payload: {
   tituloLogro: string;
   fechaEvento?: string | null;
   fechaEmision: string;
+  tipoDiploma: string;
+  rol?: string | null;
+  codigoDiploma: string;
 }) {
   return {
+    Tipo_Doc: payload.tipoDiploma,
+    Rol: payload.rol ?? "",
+    "Codigo Diploma": payload.codigoDiploma,
     Nombres: payload.nombres,
     "Apellido paterno": payload.apellidoPaterno,
     "Apellido Materno": payload.apellidoMaterno ?? "",

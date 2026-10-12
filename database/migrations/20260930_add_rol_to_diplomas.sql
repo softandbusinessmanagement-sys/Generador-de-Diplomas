@@ -1,0 +1,2 @@
+ALTER TABLE public.diplomas
+ADD COLUMN IF NOT EXISTS rol VARCHAR(100);

@@ -81,6 +81,7 @@ export type Database = {
           codigo_diploma: string;
           codigo_verificacion: string;
           tipo_diploma: string;
+          rol: string | null;
           categoria: string | null;
           titulo_o_logro: string;
           descripcion: string | null;
@@ -108,6 +109,7 @@ export type Database = {
           codigo_diploma: string;
           codigo_verificacion: string;
           tipo_diploma: string;
+          rol?: string | null;
           categoria?: string | null;
           titulo_o_logro: string;
           descripcion?: string | null;
@@ -131,6 +133,7 @@ export type Database = {
         Update: Partial<{
           persona_id: string;
           tipo_diploma: string;
+          rol: string | null;
           categoria: string | null;
           titulo_o_logro: string;
           descripcion: string | null;

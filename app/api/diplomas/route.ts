@@ -132,7 +132,10 @@ export async function POST(request: Request) {
         escuelaProfesional: asNullable(payload.escuelaProfesional),
         tituloLogro: payload.tituloLogro,
         fechaEvento: asNullable(payload.fechaEvento),
-        fechaEmision: payload.fechaEmision
+        fechaEmision: payload.fechaEmision,
+        tipoDiploma: payload.tipoDiploma,
+        rol: asNullable(payload.rol),
+        codigoDiploma: diplomaCode
       })
     );
 
@@ -184,6 +187,7 @@ export async function POST(request: Request) {
         codigo_diploma: diplomaCode,
         codigo_verificacion: verificationCode,
         tipo_diploma: payload.tipoDiploma,
+        rol: asNullable(payload.rol),
         categoria: asNullable(payload.categoria),
         titulo_o_logro: payload.tituloLogro,
         descripcion: asNullable(payload.descripcion),

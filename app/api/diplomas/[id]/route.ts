@@ -75,6 +75,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
     const diplomaUpdate = {
       tipo_diploma: payload.tipoDiploma,
+      rol: payload.rol !== undefined ? asNullable(payload.rol) : undefined,
       categoria: payload.categoria !== undefined ? asNullable(payload.categoria) : undefined,
       titulo_o_logro: payload.tituloLogro,
       descripcion: payload.descripcion !== undefined ? asNullable(payload.descripcion) : undefined,
